@@ -8,8 +8,13 @@
 </head>
 <body>
     <header class="site-header">
-        <div class="container">
-            <h1 class="logo">The Chore Game Shop</h1>
+        <a href="index.html">
+          <img class="logo" src="images/logo_chore_2.png" alt="Logo">
+        </a>
+        <div class="container-logo">
+          <a href="index.html">
+            <img class src="images/logo_text_chore_3.png" href = "index.html" alt="The Chore Game">
+          </a>
             <nav class="main-nav">
                 <a href="index.html">Home</a>
                 <a href="shop.html">Shop</a>
@@ -18,41 +23,63 @@
     </header>
 
     <main class="site-main container">
-        <h2>Shop</h2>
+        <!-- points display with shop management in center -->
+        <div class="points-display grid-3">
+            <div class="points-box" id="left-points-box">
+                <h3 id="left-header">Left Column</h3>
+                <div class="points-value"><strong id="shop-left-points">0</strong> pts</div>
+            </div>
+            
+            <!-- Shop management section (moved to center) -->
+            <section class="shop-management">
+                <div class="shop-header">
+                    <h2>Shop Management</h2>
+                    <button type="button" id="toggle-add-form" class="btn btn-add" aria-expanded="false" aria-controls="add-item-form">
+                        <span class="btn-text">Add Item</span>
+                        <span class="btn-icon">+</span>
+                    </button>
+                </div>
 
-        <section id="products" class="grid-3" aria-live="polite">
-            <!-- items rendered here -->
+                <!-- collapsible add-item form -->
+                <form id="add-item-form" class="shop-form hidden" aria-label="Add shop item" novalidate>
+                    <h3 class="shop-form-title">Add New Item</h3>
+                    <div class="form-row">
+                        <input id="item-name" name="name" type="text" required aria-required="true" aria-label="Name" placeholder="Name*" />
+                    </div>
+
+                    <div class="form-row">
+                        <textarea id="item-desc" name="description" rows="2" aria-label="Description (optional)" placeholder="Description (optional)"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <input id="item-price" name="price" type="number" min="0" step="5" required aria-required="true" aria-label="Price (points)" placeholder="Price (points)*" />
+                    </div>
+
+                    <div class="form-row">
+                        <label for="item-one-time">One-time purchase</label>
+                        <input id="item-one-time" name="oneTime" type="checkbox" aria-label="Mark as one-time purchase" />
+                    </div>
+
+                    <div class="form-row">
+                        <button type="submit">Add Item</button>
+                        <span id="form-msg" class="form-msg" role="status" aria-live="polite"></span>
+                    </div>
+                </form>
+            </section>
+            
+            <div class="points-box" id="right-points-box">
+                <h3 id="right-header">Right Column</h3>
+                <div class="points-value"><strong id="shop-right-points">0</strong> pts</div>
+            </div>
+        </div>
+
+        <!-- Available items section -->
+        <section class="shop-items">
+            <h2>Available Items</h2>
+            <div id="products" class="grid-3" aria-live="polite">
+                <!-- items rendered here -->
+            </div>
         </section>
-
-        <!-- moved the add-item form below the products and added a header -->
-        <form id="add-item-form" class="shop-form" aria-label="Add shop item" novalidate>
-            <h3 class="shop-form-title">Add Items</h3>
-
-            <div class="form-row">
-                <label for="item-name">Name<span class="req">*</span></label>
-                <input id="item-name" name="name" type="text" required aria-required="true" />
-            </div>
-
-            <div class="form-row">
-                <label for="item-desc">Description (optional)</label>
-                <textarea id="item-desc" name="description" rows="2"></textarea>
-            </div>
-
-            <div class="form-row">
-                <label for="item-price">Price (points)<span class="req">*</span></label>
-                <input id="item-price" name="price" type="number" min="0" step="1" required aria-required="true" />
-            </div>
-
-            <div class="form-row">
-                <label for="item-one-time">One-time purchase</label>
-                <input id="item-one-time" name="oneTime" type="checkbox" aria-label="Mark as one-time purchase" />
-            </div>
-
-            <div class="form-row">
-                <button type="submit">Add Item</button>
-                <span id="form-msg" class="form-msg" role="status" aria-live="polite"></span>
-            </div>
-        </form>
     </main>
 
     <footer class="site-footer">
@@ -78,6 +105,22 @@
             const oneTimeInput = document.getElementById('item-one-time');
             const productsEl = document.getElementById('products');
             const msgEl = document.getElementById('form-msg');
+
+            // helper: round to nearest 5 (clamped to >= 0)
+            function roundToNearest5(n){
+                if(!Number.isFinite(n)) return 0;
+                const r = Math.round(n / 5) * 5;
+                return Math.max(0, r);
+            }
+
+            // when user finishes editing price, snap to nearest 5
+            if(priceInput){
+                priceInput.addEventListener('blur', () => {
+                    const val = Number(priceInput.value);
+                    if(Number.isNaN(val)) return;
+                    priceInput.value = String(roundToNearest5(val));
+                });
+            }
 
             function loadItems(){
                 try{
@@ -176,7 +219,9 @@
                 }
 
                 const items = loadItems();
-                const newItem = { id: Date.now(), name, description: desc, price: Math.floor(price), oneTime };
+                // round price to nearest multiple of 5 before saving
+                const roundedPrice = roundToNearest5(price);
+                const newItem = { id: Date.now(), name, description: desc, price: roundedPrice, oneTime };
                 items.push(newItem);
                 saveItems(items);
                 render();
@@ -201,13 +246,73 @@
                 }
             });
 
-            function purchaseItem(id){
+            // prompt helper: show a small two-button modal and resolve 'left' or 'right'
+            function askPayerChoice(leftName, rightName, price, itemName){
+                return new Promise((resolve)=>{
+                    const overlay = document.createElement('div');
+                    overlay.className = 'tcg-modal-overlay';
+                    overlay.innerHTML = `
+                      <div class="tcg-modal">
+                        <p>Charge ${price} pts for "${itemName}" to:</p>
+                        <div class="tcg-modal-actions">
+                          <button class="left">${leftName}</button>
+                          <button class="right">${rightName}</button>
+                        </div>
+                      </div>`;
+                    document.body.appendChild(overlay);
+                    const leftBtn = overlay.querySelector('button.left');
+                    const rightBtn = overlay.querySelector('button.right');
+                    function cleanup(choice){
+                        leftBtn.removeEventListener('click', onLeft);
+                        rightBtn.removeEventListener('click', onRight);
+                        try{ document.body.removeChild(overlay); }catch(e){}
+                        resolve(choice);
+                    }
+                    function onLeft(){ cleanup('left'); }
+                    function onRight(){ cleanup('right'); }
+                    leftBtn.addEventListener('click', onLeft);
+                    rightBtn.addEventListener('click', onRight);
+                });
+            }
+
+                        // confirm helper: show a purchase confirmation modal (Confirm / Cancel)
+                        function askConfirmPurchase(itemName, price){
+                                return new Promise((resolve)=>{
+                                        const overlay = document.createElement('div');
+                                        overlay.className = 'tcg-modal-overlay';
+                                        overlay.innerHTML = `
+                                            <div class="tcg-modal">
+                                                <p>Confirm purchase of "${itemName}" for ${price} pts?</p>
+                                                <div class="tcg-modal-actions">
+                                                    <button class="left">Cancel</button>
+                                                    <button class="right">Confirm</button>
+                                                </div>
+                                            </div>`;
+                                        document.body.appendChild(overlay);
+                                        const cancelBtn = overlay.querySelector('button.left');
+                                        const confirmBtn = overlay.querySelector('button.right');
+                                        function cleanup(choice){
+                                                cancelBtn.removeEventListener('click', onCancel);
+                                                confirmBtn.removeEventListener('click', onConfirm);
+                                                try{ document.body.removeChild(overlay); }catch(e){}
+                                                resolve(choice);
+                                        }
+                                        function onCancel(){ cleanup(false); }
+                                        function onConfirm(){ cleanup(true); }
+                                        cancelBtn.addEventListener('click', onCancel);
+                                        confirmBtn.addEventListener('click', onConfirm);
+                                });
+                        }
+
+            // purchase handler (uses askPayerChoice)
+            async function purchaseItem(id){
                 const items = loadItems();
                 const idx = items.findIndex(i => i.id === id);
                 if(idx === -1) return;
                 const item = items[idx];
 
-                if(!confirm(`Purchase "${item.name}" for ${item.price} pts?`)) return;
+                const ok = await askConfirmPurchase(item.name, item.price);
+                if(!ok) return;
 
                 // determine payer column
                 // read saved header names if available
@@ -221,8 +326,15 @@
                   }
                 }catch(e){}
 
-                // ask which column will pay (OK = left, Cancel = right)
-                const chargeLeft = confirm(`Charge ${item.price} pts to "${headers.left}"? OK = ${headers.left}, Cancel = ${headers.right}`);
+                // Ask user which column should pay using a clearer two-button modal
+                let payerChoice;
+                try{
+                  payerChoice = await askPayerChoice(headers.left, headers.right, item.price, item.name);
+                }catch(e){ payerChoice = null; }
+                if(!payerChoice) return; // user dismissed
+
+                const payer = payerChoice === 'left' ? 'left' : 'right';
+                const payerName = payer === 'left' ? headers.left : headers.right;
 
                 // load point banks
                 let points = { left: 0, right: 0 };
@@ -231,36 +343,36 @@
                   if(raw) points = JSON.parse(raw);
                 }catch(e){}
 
-                const payer = chargeLeft ? 'left' : 'right';
-                const payerName = chargeLeft ? headers.left : headers.right;
                 const current = Number(points[payer] || 0);
                 if(current < item.price){
-                  alert(`${payerName} does not have enough points (${current} pts) to purchase this item (${item.price} pts).`);
-                  return;
+                    alert(`${payerName} does not have enough points (${current} pts) to purchase this item (${item.price} pts).`);
+                    return;
                 }
 
                 // deduct and save
                 points[payer] = current - item.price;
                 try{ localStorage.setItem('tcg_points_v1', JSON.stringify(points)); }catch(e){}
+                // update the on-page point displays immediately
+                try{ renderPoints(); }catch(e){}
 
                 if(item.oneTime){
-                  // remove one-time items on purchase
-                  items.splice(idx, 1);
-                  saveItems(items);
-                  render();
-                  msgEl.textContent = `Purchased — ${item.name} removed. Charged ${payerName}.`;
+                    // remove one-time items on purchase
+                    items.splice(idx, 1);
+                    saveItems(items);
+                    render();
+                    msgEl.textContent = `Purchased — ${item.name} removed. Charged ${payerName}.`;
                 } else {
-                  msgEl.textContent = `Purchased. Charged ${payerName}.`;
+                    msgEl.textContent = `Purchased. Charged ${payerName}.`;
                 }
                 setTimeout(()=> msgEl.textContent = '', 2000);
-             }
+            }
 
             function deleteItem(id){
                 const items = loadItems();
                 const idx = items.findIndex(i => i.id === id);
                 if(idx === -1) return;
                 const item = items[idx];
-                if(!confirm(`Delete "${item.name}" from the shop?`)) return;
+                // delete immediately without confirmation
                 items.splice(idx, 1);
                 saveItems(items);
                 render();
@@ -268,9 +380,77 @@
                 setTimeout(()=> msgEl.textContent = '', 2000);
             }
 
+            // points display functions
+            function loadPoints(){
+                try{
+                    const raw = localStorage.getItem('tcg_points_v1');
+                    return raw ? JSON.parse(raw) : { left: 0, right: 0 };
+                }catch(e){
+                    return { left: 0, right: 0 };
+                }
+            }
+
+            function loadHeaders(){
+                try{
+                    const raw = localStorage.getItem('tcg_column_headers_v1');
+                    return raw ? JSON.parse(raw) : { left: 'Left Column', right: 'Right Column' };
+                }catch(e){
+                    return { left: 'Left Column', right: 'Right Column' };
+                }
+            }
+
+            function renderPoints(){
+                const points = loadPoints();
+                const headers = loadHeaders();
+                
+                // update point values
+                document.getElementById('shop-left-points').textContent = String(points.left || 0);
+                document.getElementById('shop-right-points').textContent = String(points.right || 0);
+                
+                // update headers
+                document.getElementById('left-header').textContent = headers.left;
+                document.getElementById('right-header').textContent = headers.right;
+            }
+
             // set year and initial render
             document.getElementById('year2').textContent = new Date().getFullYear();
             render();
+            renderPoints(); // render initial points
+
+            // re-render points when storage changes (in case points are updated in another tab)
+            window.addEventListener('storage', (e) => {
+                if(e.key === 'tcg_points_v1' || e.key === 'tcg_column_headers_v1'){
+                    renderPoints();
+                }
+            });
+
+            // Add Items form toggle functionality
+            const toggleBtn = document.getElementById('toggle-add-form');
+            if(toggleBtn){
+                toggleBtn.addEventListener('click', () => {
+                    const form = document.getElementById('add-item-form');
+                    const isHidden = form.classList.contains('hidden');
+                    
+                    // toggle form visibility
+                    form.classList.toggle('hidden');
+                    
+                    // update button state
+                    toggleBtn.setAttribute('aria-expanded', String(!isHidden));
+                    
+                    // if showing form, focus first input
+                    if(isHidden){
+                        nameInput.focus();
+                    }
+                });
+
+                // close form on successful add
+                const originalSubmitHandler = form.onsubmit;
+                form.addEventListener('submit', (e) => {
+                    if(e.defaultPrevented) return; // if validation failed
+                    form.classList.add('hidden');
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                });
+            }
         })();
     </script>
 </body>

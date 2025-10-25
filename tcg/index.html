@@ -6,21 +6,30 @@
     <title>The Chore Game - Home</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    <header class="site-header">
-        <div class="container">
-            <h1 class="logo">The Chore Game</h1>
-            <nav class="main-nav">
-                <a href="tindex.html">Home</a>
-                <a href="shop.html">Shop</a>
-            </nav>
+<header class="site-header">
+  
+    <div class="container">
+        <a href="index.html">
+          <img class="logo" src="images/logo_chore_2.png" alt="Logo">
+        </a>
+        <div class="container-logo">
+          <a href="index.html">
+            <img class src="images/logo_text_chore_3.png" href = "index.html" alt="The Chore Game">
+          </a>
         </div>
-    </header>
+          <nav class="main-nav">
+              <a href="index.html">House</a>
+              <a href="shop.html">Shop</a>
+          </nav>
+      </div>
+</header>
+<body>
+    
 <!-- ...existing code... -->
     <main class="site-main container">
         <section class="grid-3">
             <div class="column" id="column-left">
-                <h3 class="column-header" contenteditable="true" aria-label="Column 1 header">Column 1</h3>
+                <h3 class="column-header" contenteditable="true" style="text-transform: uppercase;" aria-label="Column 1 header">Enter Name Here</h3>
 
                 <!-- left points bank (display only) -->
                 <div class="points-bank">
@@ -34,11 +43,13 @@
              </div>
 
             <div class="column" id="chores-column">
-                <h3 class="column-header" aria-label="Unchoosen Chores">Unchoosen Chores</h3>
+                <h3 class="column-header" aria-label="Unchoosen Chores">Unchosen Chores</h3>
 
                 <!-- random assign button -->
-                <div>
-                  <button id="random-assign-btn" type="button" class="btn">Randomly Assign Chores</button>
+                <div class="button-container">
+                    <button id="random-assign-btn" type="button" class="btn">Random</button>
+                    <button id="auction-btn" type="button" class="btn">Auction</button>
+                    <button id="draft-btn" type="button" class="btn">Draft</button>
                 </div>
 
                 <!-- unchosen chores list (rendered by JS) -->
@@ -47,26 +58,16 @@
                 </div>
 
                 <!-- add-chore form -->
-                <form id="add-chore-form" class="chore-form" aria-label="Add chore" novalidate>
-                    <div class="form-row">
-                        <label for="chore-name">Name<span class="req">*</span></label>
-                        <input id="chore-name" name="name" type="text" required aria-required="true" />
-                    </div>
-
-                    <div class="form-row">
-                        <label>Points</label>
-                        <div style="padding:8px; color:#374151;">10 pts (fixed)</div>
-                    </div>
-
-                    <div class="form-row">
-                        <button type="submit" class="btn">Add Chore</button>
-                        <span id="chore-msg" class="form-msg" role="status" aria-live="polite"></span>
+                <form id="add-chore-form" class="chore-form" aria-label="Add chore" novalidate style="max-width: 400px; margin: 0 auto;">
+                    <div class="form-row" style="display: flex; gap: 8px; align-items: center;">
+                        <input id="chore-name" name="name" type="text" required aria-required="true" placeholder="Chore Name" style="margin-top: 0; width: 200px;" />
+                        <button type="submit" id = "unchosen-button-add" class="btn">Add</button>
                     </div>
                 </form>
             </div>
 
             <div class="column" id="column-right">
-                 <h3 class="column-header" contenteditable="true" aria-label="Column 3 header">Column 3</h3>
+                 <h3 class="column-header" contenteditable="true" style="text-transform: uppercase;" aria-label="Column 3 header">Enter Name Here</h3>
  
                 <!-- right points bank (display only) -->
                 <div class="points-bank" style="align-self:flex-end;">
@@ -87,6 +88,8 @@
             <p>© <span id="year"></span> The Chore Game</p>
         </div>
     </footer>
+    
+<!-- vvvv Java Script vvvv -->
 
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();
@@ -98,6 +101,7 @@
       const STORAGE_KEY = 'tcg_chores_v1';
       const HEADERS_KEY = 'tcg_column_headers_v1';
       const POINTS_KEY = 'tcg_points_v1';
+  const HEADER_MAX = 8; // Max characters allowed for left/right headers
 
       // points helpers
       function loadPoints(){
@@ -160,23 +164,22 @@
           const raw = localStorage.getItem(HEADERS_KEY);
           const parsed = raw ? JSON.parse(raw) : {};
           return {
-            left: parsed.left ?? (leftHeaderEl ? leftHeaderEl.textContent.trim() : 'Left'),
-            right: parsed.right ?? (rightHeaderEl ? rightHeaderEl.textContent.trim() : 'Right')
+            left: parsed.left ?? (leftHeaderEl ? leftHeaderEl.textContent.trim() : 'Enter Name Here'),
+            right: parsed.right ?? (rightHeaderEl ? rightHeaderEl.textContent.trim() : 'Enter Name Here')
           };
         }catch(e){
           return {
-            left: leftHeaderEl ? leftHeaderEl.textContent.trim() : 'Left',
-            right: rightHeaderEl ? rightHeaderEl.textContent.trim() : 'Right'
+            left: leftHeaderEl ? leftHeaderEl.textContent.trim() : 'Enter Name Here',
+            right: rightHeaderEl ? rightHeaderEl.textContent.trim() : 'Enter Name Here'
           };
         }
       }
 
       function saveHeaders(){
         if(!leftHeaderEl || !rightHeaderEl) return;
-        const payload = {
-          left: leftHeaderEl.textContent.trim(),
-          right: rightHeaderEl.textContent.trim()
-        };
+        const leftText = (leftHeaderEl.textContent || '').trim().slice(0, HEADER_MAX);
+        const rightText = (rightHeaderEl.textContent || '').trim().slice(0, HEADER_MAX);
+        const payload = { left: leftText, right: rightText };
         localStorage.setItem(HEADERS_KEY, JSON.stringify(payload));
       }
 
@@ -194,6 +197,18 @@
       const form = document.getElementById('add-chore-form');
       const nameInput = document.getElementById('chore-name');
       const msgEl = document.getElementById('chore-msg');
+
+      // Track whether we're in draft mode (show manual assign buttons)
+      let draftMode = false;
+
+      // helper to show a transient message if msgEl exists
+      function notify(message, durationMs = 1800){
+        if(!msgEl) return;
+        msgEl.textContent = message || '';
+        if(message){
+          setTimeout(() => { if(msgEl) msgEl.textContent = ''; }, durationMs);
+        }
+      }
 
       // chores have shape: { id, name, points, loc } where loc is 'unchosen'|'left'|'right'
       function loadChores(){
@@ -217,16 +232,21 @@
  
         const wrap = document.createElement('div');
         wrap.style.width = '100%';
+        wrap.style.display = 'flex';
+        wrap.style.flexDirection = 'column';
+        wrap.style.alignItems = 'center';
  
         const title = document.createElement('h4');
         title.textContent = chore.name;
         title.style.margin = '0 0 6px 0';
+        title.style.textAlign = 'center';
         wrap.appendChild(title);
  
         const pts = document.createElement('p');
         pts.textContent = String(chore.points) + ' pts';
-        pts.style.margin = '0';
+        pts.style.margin = '0 0 8px 0';
         pts.style.fontWeight = '600';
+        pts.style.textAlign = 'center';
         wrap.appendChild(pts);
  
         const actions = document.createElement('div');
@@ -234,6 +254,8 @@
         actions.style.display = 'flex';
         actions.style.gap = '8px';
         actions.style.flexWrap = 'wrap';
+        actions.style.justifyContent = 'center';
+        actions.style.width = '100%';
  
         // read current column header text so labels match whatever the headers show
         const leftHeaderText = document.querySelector('.grid-3 .column:nth-child(1) .column-header')?.textContent.trim() || 'Left';
@@ -241,19 +263,42 @@
  
         // action buttons depend on location
         if(!chore.loc || chore.loc === 'unchosen'){
-          const assignLeft = document.createElement('button');
-          assignLeft.type = 'button';
-          assignLeft.className = 'btn';
-          assignLeft.textContent = `Assign → ${leftHeaderText}`;
-          assignLeft.dataset.action = 'assign-left';
-          actions.appendChild(assignLeft);
- 
-          const assignRight = document.createElement('button');
-          assignRight.type = 'button';
-          assignRight.className = 'btn';
-          assignRight.textContent = `Assign → ${rightHeaderText}`;
-          assignRight.dataset.action = 'assign-right';
-          actions.appendChild(assignRight);
+          // Only show assign buttons if in draft mode
+          if(draftMode){
+            const assignLeft = document.createElement('button');
+            assignLeft.type = 'button';
+            assignLeft.className = 'btn';
+            assignLeft.textContent = `Assign → ${leftHeaderText}`;
+            assignLeft.dataset.action = 'assign-left';
+            actions.appendChild(assignLeft);
+   
+            const assignRight = document.createElement('button');
+            assignRight.type = 'button';
+            assignRight.className = 'btn';
+            assignRight.textContent = `Assign → ${rightHeaderText}`;
+            assignRight.dataset.action = 'assign-right';
+            actions.appendChild(assignRight);
+            
+            // In draft mode, show delete button separately at bottom center
+            wrap.appendChild(actions);
+            
+            const delWrap = document.createElement('div');
+            delWrap.style.marginTop = '12px';
+            delWrap.style.display = 'flex';
+            delWrap.style.justifyContent = 'center';
+            delWrap.style.width = '100%';
+            
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'btn btn-delete';
+            del.textContent = 'Delete';
+            del.dataset.action = 'delete';
+            delWrap.appendChild(del);
+            wrap.appendChild(delWrap);
+            
+            art.appendChild(wrap);
+            return art;
+          }
         } else {
           // show complete button for assigned chores
           const completeBtn = document.createElement('button');
@@ -324,13 +369,11 @@
 
       form.addEventListener('submit', function(e){
         e.preventDefault();
-        msgEl.textContent = '';
-
+        
         const name = nameInput.value.trim();
         const points = 10; // fixed starting value
 
         if(!name){
-          msgEl.textContent = 'Name required.';
           nameInput.focus();
           return;
         }
@@ -341,8 +384,6 @@
         saveChores(chores);
         render();
         form.reset();
-        msgEl.textContent = 'Chore added.';
-        setTimeout(()=> msgEl.textContent = '', 1800);
       });
 
       // delegated action handler for all three lists
@@ -362,8 +403,7 @@
           const chore = chores[idx];
           const loc = chore.loc;
           if(!loc || (loc !== 'left' && loc !== 'right')){
-            msgEl.textContent = 'Chore must be assigned to a column to complete.';
-            setTimeout(()=> msgEl.textContent = '', 1800);
+            notify('Chore must be assigned to a column to complete.', 1800);
             return;
           }
           const points = loadPoints();
@@ -376,8 +416,7 @@
           saveChores(chores);
           render();
 
-          msgEl.textContent = `${chore.name} completed — added ${chore.points} pts to ${loc}.`;
-          setTimeout(()=> msgEl.textContent = '', 1800);
+          notify(`${chore.name} completed — added ${chore.points} pts to ${loc}.`, 1800);
           return;
         }
 
@@ -400,10 +439,11 @@
           return;
         }
         if(action === 'delete'){
-          if(!confirm('Delete this chore?')) return;
+          // delete immediately without confirmation
           chores.splice(idx, 1);
           saveChores(chores);
           render();
+          notify('Chore deleted.', 1400);
           return;
         }
       });
@@ -416,8 +456,7 @@
           const chores = loadChores();
           const unchosen = chores.filter(c => !c.loc || c.loc === 'unchosen');
           if(!unchosen.length){
-            msgEl.textContent = 'No unassigned chores to assign.';
-            setTimeout(()=> msgEl.textContent = '', 1800);
+            notify('No unassigned chores to assign.', 1800);
             return;
           }
 
@@ -449,11 +488,217 @@
             }
           });
 
+          // Calculate points based on assignment order
+          // First assigned chores get lower points, last assigned gets 50 points
+          const currentlyAssigning = Array.from(idsToAssign).length;
+
+          // Sort the IDs to assign so we process them in a consistent order
+          const sortedIdsToAssign = Array.from(idsToAssign).sort();
+
+          // Calculate points for each chore being assigned
+          sortedIdsToAssign.forEach((id, index) => {
+            const chore = chores.find(c => c.id === id);
+            if (!chore) return;
+
+            // For the very last chore being assigned
+            if (index === currentlyAssigning - 1) {
+              chore.points = 50;
+            } else {
+              // Scale points from 10 to 40 based on position
+              const progress = index / (currentlyAssigning - 1);  // 0 to 1
+              const basePoints = 10 + (progress * 30);  // 10 to 40
+              // Round up to nearest 5
+              chore.points = Math.ceil(basePoints / 5) * 5;
+            }
+          });
+
+          draftMode = false; // Disable manual assignment buttons
           saveChores(chores);
           render();
-          msgEl.textContent = `Assigned ${unchosen.length} chore(s) (balanced).`;
-          setTimeout(()=> msgEl.textContent = '', 1800);
+          notify(`Assigned ${unchosen.length} chore(s) (balanced).`, 1800);
         });
+      }
+
+      // Auction flow helpers
+      function askYesNo(message, yesLabel = 'Yes', noLabel = 'No'){
+        return new Promise(resolve => {
+          const overlay = document.createElement('div');
+          overlay.className = 'tcg-modal-overlay';
+          const modal = document.createElement('div');
+          modal.className = 'tcg-modal';
+
+          const p = document.createElement('p');
+          p.textContent = message;
+          const actions = document.createElement('div');
+          actions.className = 'tcg-modal-actions';
+
+          const yesBtn = document.createElement('button');
+          yesBtn.textContent = yesLabel;
+          const noBtn = document.createElement('button');
+          noBtn.textContent = noLabel;
+
+          function cleanup(result){
+            document.removeEventListener('keydown', onKey);
+            overlay.remove();
+            resolve(result);
+          }
+          function onKey(e){
+            if(e.key === 'Escape') cleanup(false);
+            if(e.key === 'Enter') cleanup(true);
+          }
+
+          yesBtn.addEventListener('click', () => cleanup(true));
+          noBtn.addEventListener('click', () => cleanup(false));
+          document.addEventListener('keydown', onKey);
+
+          actions.appendChild(noBtn);
+          actions.appendChild(yesBtn);
+          modal.appendChild(p);
+          modal.appendChild(actions);
+          overlay.appendChild(modal);
+          document.body.appendChild(overlay);
+        });
+      }
+
+      // Helper for Draft: ask Easy or Hard
+      function askHighOrLow(choreName){
+        return new Promise(resolve => {
+          const overlay = document.createElement('div');
+          overlay.className = 'tcg-modal-overlay';
+          const modal = document.createElement('div');
+          modal.className = 'tcg-modal';
+
+          const p = document.createElement('p');
+          p.textContent = `How difficult is: ${choreName}`;
+          const actions = document.createElement('div');
+          actions.className = 'tcg-modal-actions';
+
+          const highBtn = document.createElement('button');
+          highBtn.textContent = 'Hard';
+          const lowBtn = document.createElement('button');
+          lowBtn.textContent = 'Easy';
+
+          function cleanup(choice){
+            overlay.remove();
+            resolve(choice);
+          }
+
+          highBtn.addEventListener('click', () => cleanup('high'));
+          lowBtn.addEventListener('click', () => cleanup('low'));
+
+          actions.appendChild(lowBtn);
+          actions.appendChild(highBtn);
+          modal.appendChild(p);
+          modal.appendChild(actions);
+          overlay.appendChild(modal);
+          document.body.appendChild(overlay);
+        });
+      }
+
+      async function auctionSingle(chore, leftName, rightName){
+        let currentPrice = 45;
+        let currentBidder = Math.random() < 0.5 ? 'left' : 'right';
+        let lastAcceptedBid = null;
+        let lastBidder = null;
+
+        while(currentPrice >= 5){
+          // Auto-assign at 5 points to the current bidder
+          if(currentPrice === 5){
+            chore.loc = currentBidder;
+            chore.points = 5;
+            return;
+          }
+
+          const bidderLabel = currentBidder === 'left' ? (leftName || 'Left') : (rightName || 'Right');
+          const accepted = await askYesNo(`Will ${bidderLabel} take "${chore.name}" for ${currentPrice} points?`, 'Yes', 'No');
+          if(accepted){
+            lastAcceptedBid = currentPrice;
+            lastBidder = currentBidder;
+            currentPrice -= 5;
+            currentBidder = currentBidder === 'left' ? 'right' : 'left';
+            continue;
+          } else {
+            if(lastBidder){
+              chore.loc = lastBidder;
+              chore.points = lastAcceptedBid;
+              return;
+            } else {
+              // nobody has accepted yet; lower price and offer to the other side
+              currentPrice -= 5;
+              currentBidder = currentBidder === 'left' ? 'right' : 'left';
+              continue;
+            }
+          }
+        }
+
+        // Fallback: if loop exits, assign to last bidder or current at 5
+        if(lastBidder){
+          chore.loc = lastBidder;
+          chore.points = lastAcceptedBid;
+        } else {
+          chore.loc = currentBidder;
+          chore.points = 5;
+        }
+      }
+
+      async function runAuction(){
+        const chores = loadChores();
+        const unchosen = chores.filter(c => !c.loc || c.loc === 'unchosen');
+        if(!unchosen.length){
+          notify('No unassigned chores to auction.', 1800);
+          return;
+        }
+        const headers = loadHeaders();
+        for(const chore of unchosen){
+          await auctionSingle(chore, headers.left, headers.right);
+          saveChores(chores);
+          render();
+        }
+        draftMode = false; // Disable manual assignment buttons
+      }
+
+      const auctionBtn = document.getElementById('auction-btn');
+      if(auctionBtn){
+        auctionBtn.addEventListener('click', () => { runAuction(); });
+      }
+
+      // Draft flow: ask High/Low for each chore and assign random points
+      function randomInRange(min, max){
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function roundToNearest5(n){
+        return Math.round(n / 5) * 5;
+      }
+
+      async function runDraft(){
+        const chores = loadChores();
+        const unchosen = chores.filter(c => !c.loc || c.loc === 'unchosen');
+        if(!unchosen.length){
+          notify('No unassigned chores to draft.', 1800);
+          return;
+        }
+
+        for(const chore of unchosen){
+          const choice = await askHighOrLow(chore.name);
+          let points;
+          if(choice === 'high'){
+            points = randomInRange(35, 50);
+          } else {
+            points = randomInRange(10, 30);
+          }
+          chore.points = roundToNearest5(points);
+        }
+
+        draftMode = true; // Enable manual assignment buttons
+        saveChores(chores);
+        render();
+        notify(`Drafted ${unchosen.length} chore(s) with point values.`, 1800);
+      }
+
+      const draftBtn = document.getElementById('draft-btn');
+      if(draftBtn){
+        draftBtn.addEventListener('click', () => { runDraft(); });
       }
 
       // re-render when either column header text changes so button labels stay in sync
@@ -461,10 +706,20 @@
         if(!h) return;
         // save header text and re-render as the user types / on blur
         h.addEventListener('input', () => {
+          // Enforce 8-char limit live while typing/pasting
+          const txt = (h.textContent || '').trim();
+          if(txt.length > HEADER_MAX){
+            h.textContent = txt.slice(0, HEADER_MAX);
+          }
           saveHeaders();
           render();
         });
         h.addEventListener('blur', () => {
+          // Ensure limit also on blur
+          const txt = (h.textContent || '').trim();
+          if(txt.length > HEADER_MAX){
+            h.textContent = txt.slice(0, HEADER_MAX);
+          }
           saveHeaders();
           render();
         });
