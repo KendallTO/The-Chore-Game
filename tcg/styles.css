@@ -268,4 +268,10 @@ body{
   border-style:dashed;
 }
 
-/* keep existing button styles (btn, btn-delete) */
+.points-bank{
+  background: transparent;
+  border: none;
+  padding: 6px;
+  color: #374151;
+  font-size: 0.95rem;
+}

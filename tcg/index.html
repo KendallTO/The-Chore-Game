@@ -22,11 +22,16 @@
             <div class="column" id="column-left">
                 <h3 class="column-header" contenteditable="true" aria-label="Column 1 header">Column 1</h3>
 
-                <!-- left column chores -->
-                <div id="left-list">
-                    <article class="card chore-placeholder">No chores assigned.</article>
+                <!-- left points bank (display only) -->
+                <div class="points-bank">
+                  <div>Points: <strong id="left-points">0</strong></div>
                 </div>
-            </div>
+ 
+                 <!-- left column chores -->
+                 <div id="left-list">
+                     <article class="card chore-placeholder">No chores assigned.</article>
+                 </div>
+             </div>
 
             <div class="column" id="chores-column">
                 <h3 class="column-header" aria-label="Unchoosen Chores">Unchoosen Chores</h3>
@@ -61,15 +66,20 @@
             </div>
 
             <div class="column" id="column-right">
-                <h3 class="column-header" contenteditable="true" aria-label="Column 3 header">Column 3</h3>
+                 <h3 class="column-header" contenteditable="true" aria-label="Column 3 header">Column 3</h3>
+ 
+                <!-- right points bank (display only) -->
+                <div class="points-bank" style="align-self:flex-end;">
+                  <div>Points: <strong id="right-points">0</strong></div>
+                </div>
 
                 <!-- right column chores -->
                 <div id="right-list">
                     <article class="card chore-placeholder">No chores assigned.</article>
                 </div>
-            </div>
-        </section>
-    </main>
+             </div>
+         </section>
+     </main>
 <!-- ...existing code... -->
 
     <footer class="site-footer">
@@ -87,14 +97,59 @@
     (function(){
       const STORAGE_KEY = 'tcg_chores_v1';
       const HEADERS_KEY = 'tcg_column_headers_v1';
+      const POINTS_KEY = 'tcg_points_v1';
 
-      const leftListEl = document.getElementById('left-list');
-      const unchosenListEl = document.getElementById('chores-list');
-      const rightListEl = document.getElementById('right-list');
+      // points helpers
+      function loadPoints(){
+        try{
+          const raw = localStorage.getItem(POINTS_KEY);
+          return raw ? JSON.parse(raw) : { left: 0, right: 0 };
+        }catch(e){
+          return { left: 0, right: 0 };
+        }
+      }
+      function savePoints(p){ localStorage.setItem(POINTS_KEY, JSON.stringify(p)); }
+      function renderPoints(){
+        const p = loadPoints();
+        const leftEl = document.getElementById('left-points');
+        const rightEl = document.getElementById('right-points');
+        if(leftEl) leftEl.textContent = String(p.left || 0);
+        if(rightEl) rightEl.textContent = String(p.right || 0);
+      }
 
-      const form = document.getElementById('add-chore-form');
-      const nameInput = document.getElementById('chore-name');
-      const msgEl = document.getElementById('chore-msg');
+      // wire up quick controls (left/right buttons exist for left/right columns)
+      document.addEventListener('DOMContentLoaded', () => {
+        const leftAdd = document.getElementById('left-add-10');
+        const leftReset = document.getElementById('left-reset');
+        const rightAdd = document.getElementById('right-add-10');
+        const rightReset = document.getElementById('right-reset');
+
+        if(leftAdd){
+          leftAdd.addEventListener('click', () => {
+            const p = loadPoints(); p.left = (p.left||0) + 10; savePoints(p); renderPoints();
+          });
+        }
+        if(leftReset){
+          leftReset.addEventListener('click', () => {
+            if(!confirm('Reset left points to 0?')) return;
+            const p = loadPoints(); p.left = 0; savePoints(p); renderPoints();
+          });
+        }
+        if(rightAdd){
+          rightAdd.addEventListener('click', () => {
+            const p = loadPoints(); p.right = (p.right||0) + 10; savePoints(p); renderPoints();
+          });
+        }
+        if(rightReset){
+          rightReset.addEventListener('click', () => {
+            if(!confirm('Reset right points to 0?')) return;
+            const p = loadPoints(); p.right = 0; savePoints(p); renderPoints();
+          });
+        }
+
+        renderPoints();
+      });
+
 
       // header elements (editable)
       const leftHeaderEl = document.querySelector('.grid-3 .column:nth-child(1) .column-header');
@@ -132,6 +187,14 @@
       // save any normalization (optional)
       saveHeaders();
 
+      // DOM elements used by the chores logic (ensure these are wired up)
+      const leftListEl = document.getElementById('left-list');
+      const unchosenListEl = document.getElementById('chores-list');
+      const rightListEl = document.getElementById('right-list');
+      const form = document.getElementById('add-chore-form');
+      const nameInput = document.getElementById('chore-name');
+      const msgEl = document.getElementById('chore-msg');
+
       // chores have shape: { id, name, points, loc } where loc is 'unchosen'|'left'|'right'
       function loadChores(){
         try{
@@ -151,31 +214,31 @@
         art.className = 'card chore';
         art.dataset.id = String(chore.id);
         art.dataset.loc = chore.loc || 'unchosen';
-
+ 
         const wrap = document.createElement('div');
         wrap.style.width = '100%';
-
+ 
         const title = document.createElement('h4');
         title.textContent = chore.name;
         title.style.margin = '0 0 6px 0';
         wrap.appendChild(title);
-
+ 
         const pts = document.createElement('p');
         pts.textContent = String(chore.points) + ' pts';
         pts.style.margin = '0';
         pts.style.fontWeight = '600';
         wrap.appendChild(pts);
-
+ 
         const actions = document.createElement('div');
         actions.style.marginTop = '8px';
         actions.style.display = 'flex';
         actions.style.gap = '8px';
         actions.style.flexWrap = 'wrap';
-
+ 
         // read current column header text so labels match whatever the headers show
         const leftHeaderText = document.querySelector('.grid-3 .column:nth-child(1) .column-header')?.textContent.trim() || 'Left';
         const rightHeaderText = document.querySelector('.grid-3 .column:nth-child(3) .column-header')?.textContent.trim() || 'Right';
-
+ 
         // action buttons depend on location
         if(!chore.loc || chore.loc === 'unchosen'){
           const assignLeft = document.createElement('button');
@@ -184,7 +247,7 @@
           assignLeft.textContent = `Assign → ${leftHeaderText}`;
           assignLeft.dataset.action = 'assign-left';
           actions.appendChild(assignLeft);
-
+ 
           const assignRight = document.createElement('button');
           assignRight.type = 'button';
           assignRight.className = 'btn';
@@ -192,6 +255,14 @@
           assignRight.dataset.action = 'assign-right';
           actions.appendChild(assignRight);
         } else {
+          // show complete button for assigned chores
+          const completeBtn = document.createElement('button');
+          completeBtn.type = 'button';
+          completeBtn.className = 'btn btn-purchase';
+          completeBtn.textContent = 'Complete';
+          completeBtn.dataset.action = 'complete';
+          actions.appendChild(completeBtn);
+ 
           const unassign = document.createElement('button');
           unassign.type = 'button';
           unassign.className = 'btn';
@@ -199,14 +270,14 @@
           unassign.dataset.action = 'unassign';
           actions.appendChild(unassign);
         }
-
+ 
         const del = document.createElement('button');
         del.type = 'button';
         del.className = 'btn btn-delete';
         del.textContent = 'Delete';
         del.dataset.action = 'delete';
         actions.appendChild(del);
-
+ 
         wrap.appendChild(actions);
         art.appendChild(wrap);
         return art;
@@ -285,6 +356,30 @@
         let chores = loadChores();
         const idx = chores.findIndex(c => c.id === id);
         if(idx === -1) return;
+
+        // complete action: add chore.points to correct bank (left/right)
+        if(action === 'complete'){
+          const chore = chores[idx];
+          const loc = chore.loc;
+          if(!loc || (loc !== 'left' && loc !== 'right')){
+            msgEl.textContent = 'Chore must be assigned to a column to complete.';
+            setTimeout(()=> msgEl.textContent = '', 1800);
+            return;
+          }
+          const points = loadPoints();
+          points[loc] = (points[loc] || 0) + Number(chore.points || 0);
+          savePoints(points);
+          renderPoints();
+
+          // remove the chore after completion
+          chores.splice(idx, 1);
+          saveChores(chores);
+          render();
+
+          msgEl.textContent = `${chore.name} completed — added ${chore.points} pts to ${loc}.`;
+          setTimeout(()=> msgEl.textContent = '', 1800);
+          return;
+        }
 
         if(action === 'assign-left'){
           chores[idx].loc = 'left';
@@ -377,6 +472,8 @@
 
       // initial render
       render();
+      // ensure point display is correct now (in case script ran before DOMContentLoaded)
+      renderPoints();
     })();
     </script>
 </body>

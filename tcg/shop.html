@@ -209,19 +209,51 @@
 
                 if(!confirm(`Purchase "${item.name}" for ${item.price} pts?`)) return;
 
-                if(item.oneTime){
-                    // remove one-time items on purchase
-                    items.splice(idx, 1);
-                    saveItems(items);
-                    render();
-                    msgEl.textContent = 'Purchased — one‑time item removed.';
-                    setTimeout(()=> msgEl.textContent = '', 2000);
-                }else{
-                    // non one-time: keep it but show confirmation
-                    msgEl.textContent = 'Purchased.';
-                    setTimeout(()=> msgEl.textContent = '', 2000);
+                // determine payer column
+                // read saved header names if available
+                let headers = { left: 'Left', right: 'Right' };
+                try{
+                  const raw = localStorage.getItem('tcg_column_headers_v1');
+                  if(raw) {
+                    const parsed = JSON.parse(raw);
+                    headers.left = parsed.left || headers.left;
+                    headers.right = parsed.right || headers.right;
+                  }
+                }catch(e){}
+
+                // ask which column will pay (OK = left, Cancel = right)
+                const chargeLeft = confirm(`Charge ${item.price} pts to "${headers.left}"? OK = ${headers.left}, Cancel = ${headers.right}`);
+
+                // load point banks
+                let points = { left: 0, right: 0 };
+                try{
+                  const raw = localStorage.getItem('tcg_points_v1');
+                  if(raw) points = JSON.parse(raw);
+                }catch(e){}
+
+                const payer = chargeLeft ? 'left' : 'right';
+                const payerName = chargeLeft ? headers.left : headers.right;
+                const current = Number(points[payer] || 0);
+                if(current < item.price){
+                  alert(`${payerName} does not have enough points (${current} pts) to purchase this item (${item.price} pts).`);
+                  return;
                 }
-            }
+
+                // deduct and save
+                points[payer] = current - item.price;
+                try{ localStorage.setItem('tcg_points_v1', JSON.stringify(points)); }catch(e){}
+
+                if(item.oneTime){
+                  // remove one-time items on purchase
+                  items.splice(idx, 1);
+                  saveItems(items);
+                  render();
+                  msgEl.textContent = `Purchased — ${item.name} removed. Charged ${payerName}.`;
+                } else {
+                  msgEl.textContent = `Purchased. Charged ${payerName}.`;
+                }
+                setTimeout(()=> msgEl.textContent = '', 2000);
+             }
 
             function deleteItem(id){
                 const items = loadItems();
