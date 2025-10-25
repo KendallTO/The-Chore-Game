@@ -61,7 +61,7 @@
     </footer>
 
     <script>
-        // minimal shop logic: store items in localStorage, render them, allow adding
+        // minimal shop logic: store items in localStorage, render them, allow adding + purchase/delete
         (function(){
             const STORAGE_KEY = 'tcg_shop_items_v1';
             const defaultItems = [
@@ -74,7 +74,7 @@
             const nameInput = document.getElementById('item-name');
             const descInput = document.getElementById('item-desc');
             const priceInput = document.getElementById('item-price');
-            const oneTimeInput = document.getElementById('item-one-time'); // NEW
+            const oneTimeInput = document.getElementById('item-one-time');
             const productsEl = document.getElementById('products');
             const msgEl = document.getElementById('form-msg');
 
@@ -125,6 +125,26 @@
                 price.textContent = item.price + ' pts';
                 art.appendChild(price);
 
+                // actions: purchase + delete
+                const actions = document.createElement('div');
+                actions.className = 'product-actions';
+
+                const buyBtn = document.createElement('button');
+                buyBtn.type = 'button';
+                buyBtn.className = 'btn btn-purchase';
+                buyBtn.dataset.action = 'purchase';
+                buyBtn.textContent = 'Purchase';
+                actions.appendChild(buyBtn);
+
+                const delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.className = 'btn btn-delete';
+                delBtn.dataset.action = 'delete';
+                delBtn.textContent = 'Delete';
+                actions.appendChild(delBtn);
+
+                art.appendChild(actions);
+
                 return art;
             }
 
@@ -141,7 +161,7 @@
                 const name = nameInput.value.trim();
                 const desc = descInput.value.trim();
                 const price = Number(priceInput.value);
-                const oneTime = !!oneTimeInput.checked; // NEW
+                const oneTime = !!oneTimeInput.checked;
 
                 if(!name){
                     msgEl.textContent = 'Name is required.';
@@ -164,6 +184,56 @@
                 msgEl.textContent = 'Item added.';
                 setTimeout(()=> msgEl.textContent = '', 2000);
             });
+
+            // delegated click handler for purchase / delete
+            productsEl.addEventListener('click', function(e){
+                const btn = e.target.closest('button[data-action]');
+                if(!btn) return;
+                const action = btn.dataset.action;
+                const card = btn.closest('.product');
+                if(!card) return;
+                const id = Number(card.dataset.id);
+                if(action === 'purchase'){
+                    purchaseItem(id);
+                } else if(action === 'delete'){
+                    deleteItem(id);
+                }
+            });
+
+            function purchaseItem(id){
+                const items = loadItems();
+                const idx = items.findIndex(i => i.id === id);
+                if(idx === -1) return;
+                const item = items[idx];
+
+                if(!confirm(`Purchase "${item.name}" for ${item.price} pts?`)) return;
+
+                if(item.oneTime){
+                    // remove one-time items on purchase
+                    items.splice(idx, 1);
+                    saveItems(items);
+                    render();
+                    msgEl.textContent = 'Purchased — one‑time item removed.';
+                    setTimeout(()=> msgEl.textContent = '', 2000);
+                }else{
+                    // non one-time: keep it but show confirmation
+                    msgEl.textContent = 'Purchased.';
+                    setTimeout(()=> msgEl.textContent = '', 2000);
+                }
+            }
+
+            function deleteItem(id){
+                const items = loadItems();
+                const idx = items.findIndex(i => i.id === id);
+                if(idx === -1) return;
+                const item = items[idx];
+                if(!confirm(`Delete "${item.name}" from the shop?`)) return;
+                items.splice(idx, 1);
+                saveItems(items);
+                render();
+                msgEl.textContent = 'Item deleted.';
+                setTimeout(()=> msgEl.textContent = '', 2000);
+            }
 
             // set year and initial render
             document.getElementById('year2').textContent = new Date().getFullYear();

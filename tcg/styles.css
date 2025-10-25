@@ -188,3 +188,33 @@ body{
   background: #b45309; /* amber/dark orange to indicate special/one-time */
   font-weight:600;
 }
+
+.product-actions{
+  margin-top:12px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  padding:6px 10px;
+  border-radius:6px;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.btn-purchase{
+  background: #16a34a;
+  color: #fff;
+}
+
+.btn-delete{
+  background: #ef4444;
+  color: #fff;
+}
+
+.btn:focus{
+  outline: 3px solid rgba(59,130,246,0.15);
+  outline-offset: 2px;
+}
