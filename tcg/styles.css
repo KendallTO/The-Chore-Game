@@ -89,3 +89,80 @@ body{
   color:#6b7280;
   font-size:0.9rem;
 }
+
+
+.column{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.column-header{
+  margin:0;
+  padding:6px 8px;
+  font-size:1rem;
+  background: transparent;
+  border-radius:6px;
+  color:var(--text);
+  border: 1px dashed transparent;
+}
+
+/* make editable header visually clear when focused */
+.column-header[contenteditable="true"]:focus{
+  outline: none;
+  border-color: rgba(43,108,176,0.25);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(43,108,176,0.06);
+}
+
+
+.shop-form{
+  background: #fff;
+  border: 1px solid #e6e7eb;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.shop-form .form-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.shop-form label{ width:140px; font-size:0.95rem; color:#374151; }
+.shop-form input[type="text"],
+.shop-form input[type="number"],
+.shop-form textarea{
+  flex:1;
+  padding:8px;
+  border:1px solid #e5e7eb;
+  border-radius:6px;
+  font:inherit;
+}
+
+.shop-form button{
+  background: var(--accent);
+  color:#fff;
+  border:none;
+  padding:8px 12px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.shop-form button:hover{ opacity:0.95; }
+
+.form-msg{ margin-left:8px; color:#065f46; font-size:0.9rem; }
+
+.req{ color:#dc2626; margin-left:6px; font-weight:600; }
+
+.product-title{ margin:0 0 6px 0; font-size:1rem; color:#111827; }
+.product-desc{ margin:0 0 8px 0; color:#6b7280; font-size:0.9rem; }
+.product-price{ margin:0; font-weight:600; color:var(--accent); }
+
+/* when grid has product cards, ensure card layout */
+.grid-3 .product{ align-items:flex-start; padding:12px; }
+
