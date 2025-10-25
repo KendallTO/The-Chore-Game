@@ -25,10 +25,32 @@
                 <article class="card">Item 2</article>
             </div>
 
-            <div class="column">
-                <h3 class="column-header" contenteditable="true" aria-label="Column 2 header">Column 2</h3>
-                <article class="card">Item 3</article>
-                <article class="card">Item 4</article>
+            <div class="column" id="chores-column">
+                <h3 class="column-header" aria-label="Unchoosen Chores">Unchoosen Chores</h3>
+
+                <!-- chores list (rendered by JS) -->
+                <div id="chores-list">
+                    <!-- placeholder shown when empty -->
+                    <article class="card chore-placeholder">No chores yet — add one below.</article>
+                </div>
+
+                <!-- add-chore form -->
+                <form id="add-chore-form" class="chore-form" aria-label="Add chore" novalidate>
+                    <div class="form-row">
+                        <label for="chore-name">Name<span class="req">*</span></label>
+                        <input id="chore-name" name="name" type="text" required aria-required="true" />
+                    </div>
+
+                    <div class="form-row">
+                        <label for="chore-points">Points<span class="req">*</span></label>
+                        <input id="chore-points" name="points" type="number" min="0" step="1" required aria-required="true" />
+                    </div>
+
+                    <div class="form-row">
+                        <button type="submit" class="btn">Add Chore</button>
+                        <span id="chore-msg" class="form-msg" role="status" aria-live="polite"></span>
+                    </div>
+                </form>
             </div>
 
             <div class="column">
@@ -48,6 +70,122 @@
 
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+
+    <script>
+    // chores: add, render, persist (localStorage)
+    (function(){
+      const STORAGE_KEY = 'tcg_chores_v1';
+      const listEl = document.getElementById('chores-list');
+      const form = document.getElementById('add-chore-form');
+      const nameInput = document.getElementById('chore-name');
+      const pointsInput = document.getElementById('chore-points');
+      const msgEl = document.getElementById('chore-msg');
+
+      function loadChores(){
+        try{
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : [];
+        }catch(e){
+          return [];
+        }
+      }
+
+      function saveChores(chores){
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(chores));
+      }
+
+      function makeChoreCard(chore){
+        const art = document.createElement('article');
+        art.className = 'card chore';
+        art.dataset.id = String(chore.id);
+
+        const wrap = document.createElement('div');
+        wrap.style.width = '100%';
+
+        const title = document.createElement('h4');
+        title.textContent = chore.name;
+        title.style.margin = '0 0 6px 0';
+        wrap.appendChild(title);
+
+        const pts = document.createElement('p');
+        pts.textContent = String(chore.points) + ' pts';
+        pts.style.margin = '0';
+        pts.style.fontWeight = '600';
+        wrap.appendChild(pts);
+
+        // delete button
+        const actions = document.createElement('div');
+        actions.style.marginTop = '8px';
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'btn btn-delete';
+        del.textContent = 'Delete';
+        del.dataset.action = 'delete';
+        actions.appendChild(del);
+        wrap.appendChild(actions);
+
+        art.appendChild(wrap);
+        return art;
+      }
+
+      function render(){
+        const chores = loadChores();
+        listEl.innerHTML = '';
+        if(!chores.length){
+          const ph = document.createElement('article');
+          ph.className = 'card chore-placeholder';
+          ph.textContent = 'No chores yet — add one below.';
+          listEl.appendChild(ph);
+          return;
+        }
+        chores.forEach(c => listEl.appendChild(makeChoreCard(c)));
+      }
+
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        msgEl.textContent = '';
+
+        const name = nameInput.value.trim();
+        const points = Number(pointsInput.value);
+
+        if(!name){
+          msgEl.textContent = 'Name required.';
+          nameInput.focus();
+          return;
+        }
+        if(Number.isNaN(points) || points < 0){
+          msgEl.textContent = 'Enter valid points (0 or more).';
+          pointsInput.focus();
+          return;
+        }
+
+        const chores = loadChores();
+        const newChore = { id: Date.now(), name, points: Math.floor(points) };
+        chores.push(newChore);
+        saveChores(chores);
+        render();
+        form.reset();
+        msgEl.textContent = 'Chore added.';
+        setTimeout(()=> msgEl.textContent = '', 1800);
+      });
+
+      // delegated delete handler
+      listEl.addEventListener('click', function(e){
+        const btn = e.target.closest('button[data-action="delete"]');
+        if(!btn) return;
+        const card = btn.closest('.chore');
+        if(!card) return;
+        const id = Number(card.dataset.id);
+        if(!confirm('Delete this chore?')) return;
+        const chores = loadChores().filter(c => c.id !== id);
+        saveChores(chores);
+        render();
+      });
+
+      // initial render
+      render();
+    })();
     </script>
 </body>
 </html>
