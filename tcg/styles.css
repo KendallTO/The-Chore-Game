@@ -115,7 +115,6 @@ body{
   box-shadow: 0 0 0 3px rgba(43,108,176,0.06);
 }
 
-
 .shop-form{
   background: #fff;
   border: 1px solid #e6e7eb;
@@ -166,3 +165,26 @@ body{
 /* when grid has product cards, ensure card layout */
 .grid-3 .product{ align-items:flex-start; padding:12px; }
 
+
+/* product title + badge layout */
+.product-title-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+}
+
+.badge{
+  display:inline-block;
+  font-size:0.75rem;
+  padding:4px 8px;
+  border-radius:999px;
+  color:#fff;
+  background:#6b7280;
+}
+
+/* one-time badge style */
+.badge.one-time{
+  background: #b45309; /* amber/dark orange to indicate special/one-time */
+  font-weight:600;
+}
