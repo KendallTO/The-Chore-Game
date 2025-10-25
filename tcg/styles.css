@@ -9,6 +9,9 @@
   --header_footer: #adadad;
   --button_back: #B8D0EB;
   --button_hover: #5D707F;
+  --background_color: #e7e7e7;
+  --header_btn_back: #e7e7e7;
+  --header_btn_hover: #B8D0EB;
 
   --names_font: "Yusei Magic", sans-serif;
   --header_font: "Montserrat", sans-serif;
@@ -32,7 +35,7 @@ body{
   font-family: var(--p_font);
   margin: 0;
   color: var(--text);
-  background: #e7e7e7;
+  background: var(--background_color);
   line-height: 1.4;
   min-height: 100vh;
   display: flex;
@@ -50,12 +53,22 @@ body{
   left: 50%;
   width: 25vw;
   transform: translate(-50%, -50%);
+  margin-top: 0.5vw;
 }
 
+.header-btn {
+  background-color: var(--header_btn_back);
+  color: var(--button_hover);
+}
+
+.header-btn:hover {
+  background-color: var(--header_btn_hover);
+  /* color: var(--center_column); */
+}
 
 .site-header{
   background: var(--muted);
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--background_color);
   background-color: var(--header_footer);
 }
 
@@ -74,8 +87,6 @@ body{
 
 .logo_text{
   max-width: 20%;
-
-  
 }
 
 
@@ -87,10 +98,6 @@ body{
   border-radius:6px;
 }
 
-.main-nav a:hover{
-  background: #e6eefc;
-  color:var(--accent);
-}
 
 .btn {
   background-color: var(--button_back);
@@ -252,6 +259,18 @@ body{
 
 .shop-items h2 {
   margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Draw a soft divider line that fills the remaining space to the right of the title */
+.shop-items h2::after {
+  content: "";
+  flex: 1;
+  height: 2px; /* slightly thicker for visibility */
+  background: var(--accent); /* use theme accent color */
+  opacity: 0.35; /* keep it subtle but noticeable */
 }
 
 .shop-header {
