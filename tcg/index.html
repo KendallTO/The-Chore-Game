@@ -269,14 +269,14 @@
             const assignLeft = document.createElement('button');
             assignLeft.type = 'button';
             assignLeft.className = 'btn';
-            assignLeft.textContent = `Assign → ${leftHeaderText}`;
+            assignLeft.textContent = `Assign → ${leftHeaderText.toUpperCase()}`;
             assignLeft.dataset.action = 'assign-left';
             actions.appendChild(assignLeft);
    
             const assignRight = document.createElement('button');
             assignRight.type = 'button';
             assignRight.className = 'btn';
-            assignRight.textContent = `Assign → ${rightHeaderText}`;
+            assignRight.textContent = `Assign → ${rightHeaderText.toUpperCase()}`;
             assignRight.dataset.action = 'assign-right';
             actions.appendChild(assignRight);
             
@@ -614,7 +614,7 @@
           }
 
           const bidderLabel = currentBidder === 'left' ? (leftName || 'Left') : (rightName || 'Right');
-          const accepted = await askYesNo(`Will ${bidderLabel} take "${chore.name}" for ${currentPrice} points?`, 'Yes', 'No');
+          const accepted = await askYesNo(`Will ${bidderLabel.toUpperCase()} take "${chore.name}" for ${currentPrice} points?`, 'Yes', 'No');
           if(accepted){
             lastAcceptedBid = currentPrice;
             lastBidder = currentBidder;
