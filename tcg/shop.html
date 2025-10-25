@@ -20,8 +20,14 @@
     <main class="site-main container">
         <h2>Shop</h2>
 
-        <!-- Add item form -->
+        <section id="products" class="grid-3" aria-live="polite">
+            <!-- items rendered here -->
+        </section>
+
+        <!-- moved the add-item form below the products and added a header -->
         <form id="add-item-form" class="shop-form" aria-label="Add shop item" novalidate>
+            <h3 class="shop-form-title">Add Items</h3>
+
             <div class="form-row">
                 <label for="item-name">Name<span class="req">*</span></label>
                 <input id="item-name" name="name" type="text" required aria-required="true" />
@@ -37,7 +43,6 @@
                 <input id="item-price" name="price" type="number" min="0" step="1" required aria-required="true" />
             </div>
 
-            <!-- NEW: one-time purchase checkbox -->
             <div class="form-row">
                 <label for="item-one-time">One-time purchase</label>
                 <input id="item-one-time" name="oneTime" type="checkbox" aria-label="Mark as one-time purchase" />
@@ -48,10 +53,6 @@
                 <span id="form-msg" class="form-msg" role="status" aria-live="polite"></span>
             </div>
         </form>
-
-        <section id="products" class="grid-3" aria-live="polite">
-            <!-- items rendered here -->
-        </section>
     </main>
 
     <footer class="site-footer">

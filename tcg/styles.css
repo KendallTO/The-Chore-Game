@@ -120,6 +120,7 @@ body{
   border: 1px solid #e6e7eb;
   padding: 12px;
   border-radius: 8px;
+  margin-top: 24px; /* added spacing between products and form */
   margin-bottom: 16px;
   display:flex;
   flex-direction:column;
@@ -217,4 +218,11 @@ body{
 .btn:focus{
   outline: 3px solid rgba(59,130,246,0.15);
   outline-offset: 2px;
+}
+
+.shop-form .shop-form-title{
+  margin:0 0 8px 0;
+  font-size:1.05rem;
+  color:var(--text);
+  padding-left:2px;
 }
