@@ -81,6 +81,7 @@
     // chores: add, render, persist (localStorage)
     (function(){
       const STORAGE_KEY = 'tcg_chores_v1';
+      const HEADERS_KEY = 'tcg_column_headers_v1';
 
       const leftListEl = document.getElementById('left-list');
       const unchosenListEl = document.getElementById('chores-list');
@@ -90,6 +91,42 @@
       const nameInput = document.getElementById('chore-name');
       const pointsInput = document.getElementById('chore-points');
       const msgEl = document.getElementById('chore-msg');
+
+      // header elements (editable)
+      const leftHeaderEl = document.querySelector('.grid-3 .column:nth-child(1) .column-header');
+      const rightHeaderEl = document.querySelector('.grid-3 .column:nth-child(3) .column-header');
+
+      function loadHeaders(){
+        try{
+          const raw = localStorage.getItem(HEADERS_KEY);
+          const parsed = raw ? JSON.parse(raw) : {};
+          return {
+            left: parsed.left ?? (leftHeaderEl ? leftHeaderEl.textContent.trim() : 'Left'),
+            right: parsed.right ?? (rightHeaderEl ? rightHeaderEl.textContent.trim() : 'Right')
+          };
+        }catch(e){
+          return {
+            left: leftHeaderEl ? leftHeaderEl.textContent.trim() : 'Left',
+            right: rightHeaderEl ? rightHeaderEl.textContent.trim() : 'Right'
+          };
+        }
+      }
+
+      function saveHeaders(){
+        if(!leftHeaderEl || !rightHeaderEl) return;
+        const payload = {
+          left: leftHeaderEl.textContent.trim(),
+          right: rightHeaderEl.textContent.trim()
+        };
+        localStorage.setItem(HEADERS_KEY, JSON.stringify(payload));
+      }
+
+      // apply saved headers immediately
+      const savedHeaders = loadHeaders();
+      if(leftHeaderEl) leftHeaderEl.textContent = savedHeaders.left;
+      if(rightHeaderEl) rightHeaderEl.textContent = savedHeaders.right;
+      // save any normalization (optional)
+      saveHeaders();
 
       // chores have shape: { id, name, points, loc } where loc is 'unchosen'|'left'|'right'
       function loadChores(){
@@ -131,19 +168,23 @@
         actions.style.gap = '8px';
         actions.style.flexWrap = 'wrap';
 
+        // read current column header text so labels match whatever the headers show
+        const leftHeaderText = document.querySelector('.grid-3 .column:nth-child(1) .column-header')?.textContent.trim() || 'Left';
+        const rightHeaderText = document.querySelector('.grid-3 .column:nth-child(3) .column-header')?.textContent.trim() || 'Right';
+
         // action buttons depend on location
         if(!chore.loc || chore.loc === 'unchosen'){
           const assignLeft = document.createElement('button');
           assignLeft.type = 'button';
           assignLeft.className = 'btn';
-          assignLeft.textContent = 'Assign → Left';
+          assignLeft.textContent = `Assign → ${leftHeaderText}`;
           assignLeft.dataset.action = 'assign-left';
           actions.appendChild(assignLeft);
 
           const assignRight = document.createElement('button');
           assignRight.type = 'button';
           assignRight.className = 'btn';
-          assignRight.textContent = 'Assign → Right';
+          assignRight.textContent = `Assign → ${rightHeaderText}`;
           assignRight.dataset.action = 'assign-right';
           actions.appendChild(assignRight);
         } else {
@@ -271,6 +312,20 @@
           render();
           return;
         }
+      });
+
+      // re-render when either column header text changes so button labels stay in sync
+      [leftHeaderEl, rightHeaderEl].forEach(h => {
+        if(!h) return;
+        // save header text and re-render as the user types / on blur
+        h.addEventListener('input', () => {
+          saveHeaders();
+          render();
+        });
+        h.addEventListener('blur', () => {
+          saveHeaders();
+          render();
+        });
       });
 
       // initial render
