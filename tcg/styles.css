@@ -12,6 +12,8 @@
   --background_color: #e7e7e7;
   --header_btn_back: #e7e7e7;
   --header_btn_hover: #B8D0EB;
+  --extra1-color: orange;
+  --extra2-color: lime;
 
   --names_font: "Yusei Magic", sans-serif;
   --header_font: "Montserrat", sans-serif;
@@ -158,6 +160,16 @@ body:has(.site-main .grid-3 #chores-column) #chores-list{
   align-items: center;
 }
 
+/* Align extra column lists similar to left/right lists */
+body:has(.site-main .grid-3 #chores-column) #extra-1-list,
+body:has(.site-main .grid-3 #chores-column) #extra-2-list{
+  width: 100%;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 /* Remove padding from columns on index.html */
 body:has(.site-main .grid-3 #chores-column) .site-main .grid-3 .column{
   padding: 0;
@@ -217,6 +229,27 @@ body:has(.site-main .grid-3 #chores-column) #right-points-bank{
   align-self: center;
 }
 
+/* Ensure extra columns inherit sizing from original columns */
+body:has(.site-main .grid-3 #chores-column) #column-extra-1,
+body:has(.site-main .grid-3 #chores-column) #column-extra-2{
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 25vw;
+}
+
+body:has(.site-main .grid-3 #chores-column) #column-extra-1 .card,
+body:has(.site-main .grid-3 #chores-column) #column-extra-2 .card{
+  width: 100%;
+  align-self: center;
+  text-align: center;
+  padding-left: 5px;
+  padding-right: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .card{
   min-height: 120px;
   background: #f9fafb;
@@ -243,6 +276,8 @@ body:has(.site-main .grid-3 #chores-column) #right-points-bank{
   font-size: 0.9rem;
   flex-shrink: 0;
 }
+
+
 
 
 .column{
@@ -291,6 +326,28 @@ body:has(.site-main .grid-3 #chores-column) #right-points-bank{
 }
 
 
+#extra1-header {
+  text-align: center;
+  background-color: var(--extra1-color);
+  font-size: 4vw;
+  font-family: var(--names_font);
+}
+
+#extra1-points-box {
+  background-color: var(--extra1-color);
+}
+
+#extra2-header {
+  text-align: center;
+  background-color: var(--extra2-color);
+  font-size: 4vw;
+  font-family: var(--names_font);
+}
+
+#extra2-points-box {
+  background-color: var(--extra2-color);
+}
+
 
 /* Points display in shop */
 .points-display {
@@ -315,6 +372,7 @@ body:has(.site-main .grid-3 #chores-column) #right-points-bank{
 .points-value {
   font-size: 1.25rem;
   color: var(--background_color);
+  font-family: var(--names_font)
 }
 
 /* make editable header visually clear when focused */
@@ -505,6 +563,7 @@ body:has(.site-main .grid-3 #chores-column) #right-points-bank{
   border-radius:999px;
   color:#fff;
   background:#6b7280;
+  margin-bottom: 15px;
 }
 
 /* one-time badge style */

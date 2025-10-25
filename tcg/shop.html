@@ -74,6 +74,16 @@
                 <h3 id="right-header" style="text-transform: uppercase;">Right Column</h3>
                 <div class="points-value"><strong id="shop-right-points">0</strong> pts</div>
             </div>
+
+            <!-- Extra player points boxes (row 2). Shown only if extras exist in index.html -->
+            <div class="points-box" id="extra1-points-box" style="display: none; grid-column: 1; grid-row: 2;">
+                <h3 id="extra1-header" style="text-transform: uppercase;">Player 3</h3>
+                <div class="points-value"><strong id="shop-extra1-points">0</strong> pts</div>
+            </div>
+            <div class="points-box" id="extra2-points-box" style="display: none; grid-column: 3; grid-row: 2;">
+                <h3 id="extra2-header" style="text-transform: uppercase;">Player 4</h3>
+                <div class="points-value" ><strong id="shop-extra2-points">0</strong> pts</div>
+            </div>
         </div>
 
         <!-- Available items section -->
@@ -256,32 +266,95 @@
                 }
             });
 
-            // prompt helper: show a small two-button modal and resolve 'left' or 'right'
-            function askPayerChoice(leftName, rightName, price, itemName){
+            // Combined purchase modal: shows all players and cancel button
+            function askPayerChoice(players, price, itemName){
+                // players is an array of {loc: 'left'|'right'|'extra1'|'extra2', name: 'Name'}
                 return new Promise((resolve)=>{
                     const overlay = document.createElement('div');
                     overlay.className = 'tcg-modal-overlay';
-                    overlay.innerHTML = `
-                      <div class="tcg-modal">
-                        <p>Charge ${price} pts for "${itemName}" to:</p>
-                        <div class="tcg-modal-actions">
-                          <button class="left">${leftName}</button>
-                          <button class="right">${rightName}</button>
-                        </div>
-                      </div>`;
+                    const modal = document.createElement('div');
+                    modal.className = 'tcg-modal';
+                    
+                    const p = document.createElement('p');
+                    p.textContent = `Purchase "${itemName}" for ${price} pts?`;
+                    modal.appendChild(p);
+                    
+                    // Player selection buttons
+                    const playerActions = document.createElement('div');
+                    playerActions.className = 'tcg-modal-actions';
+                    
+                    const buttons = [];
+                    players.forEach(player => {
+                        const btn = document.createElement('button');
+                        btn.textContent = player.name.toUpperCase();
+                        btn.dataset.loc = player.loc;
+                        
+                        // Apply background color based on player location
+                        if(player.loc === 'left'){
+                            btn.style.backgroundColor = '#66CED6'; // Blue for left
+                        } else if(player.loc === 'right'){
+                            btn.style.backgroundColor = '#FF4242'; // Red for right
+                        } else if(player.loc === 'extra1'){
+                            btn.style.backgroundColor = 'orange'; // Orange for Player 3
+                        } else if(player.loc === 'extra2'){
+                            btn.style.backgroundColor = 'limegreen'; // Limegreen for Player 4
+                        }
+                        btn.style.color = 'white'; // Ensure text is readable
+                        btn.style.border = 'none';
+                        
+                        playerActions.appendChild(btn);
+                        buttons.push(btn);
+                        
+                    });
+                    modal.appendChild(playerActions);
+                    
+                    // Centered cancel button below
+                    const cancelWrapper = document.createElement('div');
+                    cancelWrapper.style.marginTop = '12px';
+                    cancelWrapper.style.textAlign = 'center';
+                    
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.textContent = 'Cancel';
+                    cancelBtn.className = 'btn-cancel';
+                    cancelBtn.style.backgroundColor = '#E24A4A'; // Red
+                    cancelBtn.style.color = 'white';
+                    cancelBtn.style.border = 'none';
+                    cancelBtn.style.borderRadius = '8px';
+                    cancelBtn.style.cursor = 'pointer';
+                    cancelBtn.style.transition = 'background-color 0.2s';
+                    
+                    // Add hover effect
+                    cancelBtn.addEventListener('mouseenter', () => {
+                        cancelBtn.style.backgroundColor = '#C13838'; // Darker red
+                    });
+                    cancelBtn.addEventListener('mouseleave', () => {
+                        cancelBtn.style.backgroundColor = '#E24A4A'; // Original red
+                    });
+                    
+                    cancelWrapper.appendChild(cancelBtn);
+                    
+                    modal.appendChild(cancelWrapper);
+                    overlay.appendChild(modal);
                     document.body.appendChild(overlay);
-                    const leftBtn = overlay.querySelector('button.left');
-                    const rightBtn = overlay.querySelector('button.right');
+                    
                     function cleanup(choice){
-                        leftBtn.removeEventListener('click', onLeft);
-                        rightBtn.removeEventListener('click', onRight);
+                        buttons.forEach(btn => btn.removeEventListener('click', onClick));
+                        cancelBtn.removeEventListener('click', onCancel);
                         try{ document.body.removeChild(overlay); }catch(e){}
                         resolve(choice);
                     }
-                    function onLeft(){ cleanup('left'); }
-                    function onRight(){ cleanup('right'); }
-                    leftBtn.addEventListener('click', onLeft);
-                    rightBtn.addEventListener('click', onRight);
+                    
+                    function onClick(e){
+                        const loc = e.target.dataset.loc;
+                        cleanup(loc);
+                    }
+                    
+                    function onCancel(){
+                        cleanup(null);
+                    }
+                    
+                    buttons.forEach(btn => btn.addEventListener('click', onClick));
+                    cancelBtn.addEventListener('click', onCancel);
                 });
             }
 
@@ -338,53 +411,56 @@
                                 });
                         }
 
-            // purchase handler (uses askPayerChoice)
+            // purchase handler (uses combined askPayerChoice)
             async function purchaseItem(id){
                 const items = loadItems();
                 const idx = items.findIndex(i => i.id === id);
                 if(idx === -1) return;
                 const item = items[idx];
 
-                const ok = await askConfirmPurchase(item.name, item.price);
-                if(!ok) return;
+                // Build list of available payers
+                const headers = loadHeaders();
+                const extras = loadExtraState();
+                
+                const players = [
+                    { loc: 'left', name: headers.left },
+                    { loc: 'right', name: headers.right }
+                ];
+                
+                if(extras.extra1){
+                    players.push({ loc: 'extra1', name: headers.extra1 });
+                }
+                if(extras.extra2){
+                    players.push({ loc: 'extra2', name: headers.extra2 });
+                }
 
-                // determine payer column
-                // read saved header names if available
-                let headers = { left: 'Left', right: 'Right' };
+                // Ask user which player should pay (combined modal with cancel)
+                let payerLoc;
                 try{
-                  const raw = localStorage.getItem('tcg_column_headers_v1');
-                  if(raw) {
-                    const parsed = JSON.parse(raw);
-                    headers.left = parsed.left || headers.left;
-                    headers.right = parsed.right || headers.right;
-                  }
-                }catch(e){}
+                  payerLoc = await askPayerChoice(players, item.price, item.name);
+                }catch(e){ payerLoc = null; }
+                if(!payerLoc) return; // user cancelled
 
-                // Ask user which column should pay using a clearer two-button modal
-                let payerChoice;
-                try{
-                  payerChoice = await askPayerChoice(headers.left, headers.right, item.price, item.name);
-                }catch(e){ payerChoice = null; }
-                if(!payerChoice) return; // user dismissed
-
-                const payer = payerChoice === 'left' ? 'left' : 'right';
-                const payerName = payer === 'left' ? headers.left : headers.right;
+                const payer = players.find(p => p.loc === payerLoc);
+                if(!payer) return;
 
                 // load point banks
-                let points = { left: 0, right: 0 };
-                try{
-                  const raw = localStorage.getItem('tcg_points_v1');
-                  if(raw) points = JSON.parse(raw);
-                }catch(e){}
-
-                const current = Number(points[payer] || 0);
+                const points = loadPoints();
+                const current = Number(points[payerLoc] || 0);
                 if(current < item.price){
-                    await showInfo(`${payerName.toUpperCase()} does not have enough points (${current} pts) <br> ${payerName.toUpperCase()} needs (${item.price} pts) to purchase this item.`, 'OK');
+                    // Get player color based on location
+                    let playerColor = '';
+                    if(payerLoc === 'left') playerColor = '#66CED6';
+                    else if(payerLoc === 'right') playerColor = '#FF4242';
+                    else if(payerLoc === 'extra1') playerColor = 'orange';
+                    else if(payerLoc === 'extra2') playerColor = 'limegreen';
+                    
+                    await showInfo(`<span style="color: ${playerColor}; font-weight: bold;">${payer.name.toUpperCase()}</span> does not have enough points (${current} pts) <br> <span style="color: ${playerColor}; font-weight: bold;">${payer.name.toUpperCase()}</span> needs (${item.price} pts) to purchase this item.`, 'OK');
                     return;
                 }
 
                 // deduct and save
-                points[payer] = current - item.price;
+                points[payerLoc] = current - item.price;
                 try{ localStorage.setItem('tcg_points_v1', JSON.stringify(points)); }catch(e){}
                 // update the on-page point displays immediately
                 try{ renderPoints(); }catch(e){}
@@ -394,9 +470,9 @@
                     items.splice(idx, 1);
                     saveItems(items);
                     render();
-                    msgEl.textContent = `Purchased — ${item.name} removed. Charged ${payerName}.`;
+                    msgEl.textContent = `Purchased — ${item.name} removed. Charged ${payer.name}.`;
                 } else {
-                    msgEl.textContent = `Purchased. Charged ${payerName}.`;
+                    msgEl.textContent = `Purchased. Charged ${payer.name}.`;
                 }
                 setTimeout(()=> msgEl.textContent = '', 2000);
             }
@@ -418,32 +494,106 @@
             function loadPoints(){
                 try{
                     const raw = localStorage.getItem('tcg_points_v1');
-                    return raw ? JSON.parse(raw) : { left: 0, right: 0 };
+                    const parsed = raw ? JSON.parse(raw) : { left: 0, right: 0 };
+                    // ensure extras exist for compatibility
+                    if(typeof parsed.left !== 'number') parsed.left = 0;
+                    if(typeof parsed.right !== 'number') parsed.right = 0;
+                    if(typeof parsed.extra1 !== 'number') parsed.extra1 = 0;
+                    if(typeof parsed.extra2 !== 'number') parsed.extra2 = 0;
+                    return parsed;
                 }catch(e){
-                    return { left: 0, right: 0 };
+                    return { left: 0, right: 0, extra1: 0, extra2: 0 };
                 }
             }
 
             function loadHeaders(){
                 try{
                     const raw = localStorage.getItem('tcg_column_headers_v1');
-                    return raw ? JSON.parse(raw) : { left: 'Left Column', right: 'Right Column' };
+                    const parsed = raw ? JSON.parse(raw) : {};
+                    return {
+                        left: parsed.left || 'Left Column',
+                        right: parsed.right || 'Right Column',
+                        extra1: parsed.extra1 || 'Player 3',
+                        extra2: parsed.extra2 || 'Player 4'
+                    };
                 }catch(e){
-                    return { left: 'Left Column', right: 'Right Column' };
+                    return { left: 'Left Column', right: 'Right Column', extra1: 'Player 3', extra2: 'Player 4' };
+                }
+            }
+
+            function loadExtraState(){
+                try{
+                    const raw = localStorage.getItem('tcg_extra_cols_v1');
+                    const parsed = raw ? JSON.parse(raw) : { extra1: false, extra2: false };
+                    return { extra1: !!parsed.extra1, extra2: !!parsed.extra2 };
+                }catch(e){
+                    return { extra1: false, extra2: false };
+                }
+            }
+
+            // Position the center shop-management so its extended form passes between extra players
+            function updateShopManagementPosition(){
+                const shopSection = document.querySelector('.shop-management');
+                if(!shopSection) return;
+                const extras = loadExtraState();
+                if(extras.extra1 && extras.extra2){
+                    // Both extras: span center section across two rows so content flows between them
+                    shopSection.style.gridColumn = '2';
+                    shopSection.style.gridRow = '1 / 3';
+                } else if(extras.extra1 && !extras.extra2){
+                    // Only Player 3 present: still span so extended form passes by Player 3 without pushing it down
+                    shopSection.style.gridColumn = '2';
+                    shopSection.style.gridRow = '1 / 3';
+                } else {
+                    // Default placement
+                    shopSection.style.gridColumn = '';
+                    shopSection.style.gridRow = '';
                 }
             }
 
             function renderPoints(){
                 const points = loadPoints();
                 const headers = loadHeaders();
+                const extras = loadExtraState();
                 
-                // update point values
+                // update base point values
                 document.getElementById('shop-left-points').textContent = String(points.left || 0);
                 document.getElementById('shop-right-points').textContent = String(points.right || 0);
                 
-                // update headers
+                // update base headers
                 document.getElementById('left-header').textContent = headers.left;
                 document.getElementById('right-header').textContent = headers.right;
+
+                // toggle and update Extra 1
+                const extra1Box = document.getElementById('extra1-points-box');
+                if(extra1Box){
+                    if(extras.extra1){
+                        extra1Box.style.display = '';
+                        const h = document.getElementById('extra1-header');
+                        const v = document.getElementById('shop-extra1-points');
+                        if(h) h.textContent = headers.extra1 || 'Player 3';
+                        if(v) v.textContent = String(points.extra1 || 0);
+                    } else {
+                        extra1Box.style.display = 'none';
+                    }
+                }
+
+                // toggle and update Extra 2
+                const extra2Box = document.getElementById('extra2-points-box');
+                if(extra2Box){
+                    if(extras.extra2){
+                        extra2Box.style.display = '';
+                        const h = document.getElementById('extra2-header');
+                        const v = document.getElementById('shop-extra2-points');
+                        if(h) h.textContent = headers.extra2 || 'Player 4';
+                        if(v) v.textContent = String(points.extra2 || 0);
+                    } else {
+                        extra2Box.style.display = 'none';
+                    }
+                }
+
+                // Make sure the center section spans appropriately when extras are present
+                updateShopManagementPosition();
             }
 
             // set year and initial render
@@ -453,8 +603,9 @@
 
             // re-render points when storage changes (in case points are updated in another tab)
             window.addEventListener('storage', (e) => {
-                if(e.key === 'tcg_points_v1' || e.key === 'tcg_column_headers_v1'){
+                if(e.key === 'tcg_points_v1' || e.key === 'tcg_column_headers_v1' || e.key === 'tcg_extra_cols_v1'){
                     renderPoints();
+                    updateShopManagementPosition();
                 }
             });
 
@@ -470,6 +621,8 @@
                     
                     // update button state
                     toggleBtn.setAttribute('aria-expanded', String(!isHidden));
+                    // ensure center section spans correctly relative to extras
+                    try{ updateShopManagementPosition(); }catch(e){}
                     
                     // if showing form, focus first input
                     if(isHidden){
@@ -483,6 +636,7 @@
                     if(e.defaultPrevented) return; // if validation failed
                     form.classList.add('hidden');
                     toggleBtn.setAttribute('aria-expanded', 'false');
+                    try{ updateShopManagementPosition(); }catch(e){}
                 });
             }
         })();
