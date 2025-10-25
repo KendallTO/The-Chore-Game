@@ -81,8 +81,9 @@ body{
 }
 
 .logo{
-  max-width: 20%; 
-  margin:0;
+  max-width: 17%; 
+  margin-top:5px;
+
 }
 
 .logo_text{
@@ -159,9 +160,9 @@ body{
 
 .column{
   display:flex;
-  flex-direction:column;
+  flex-direction: column;
   gap:12px;
-}
+}s
 
 .grid-3 {
   gap: 4vw;
@@ -178,7 +179,6 @@ body{
 }
 
 #chores-column {
-  width: 30vw;
   justify-self: center;
 }
 
@@ -188,12 +188,13 @@ body{
   word-break: break-word;
 }
 
-#column-left h3 {
+#column-left h3, #left-header, #left-points-box{
   text-align: center;
   background-color: var(--left_opponent);
   font-size: 4vw;
   font-family: var(--names_font);
 }
+
 
 #chores-column h3 {
   text-align: center;
@@ -201,12 +202,13 @@ body{
   font-family: var(--header_font);
 }
 
-#column-right h3 {
+#column-right h3, #right-header, #right-points-box {
   text-align: center;
   background-color: var(--right_opponent);
   font-size: 4vw;
   font-family: var(--names_font);
 }
+
 
 
 /* Points display in shop */
@@ -231,11 +233,8 @@ body{
 
 .points-value {
   font-size: 1.25rem;
-  color: var(--accent);
+  color: var(--background_color);
 }
-
-#left-points-box { background-color: rgba(102, 206, 214, 0.15); }
-#right-points-box { background-color: rgba(238, 106, 106, 0.15); }
 
 /* make editable header visually clear when focused */
 .column-header[contenteditable="true"]:focus{
@@ -254,23 +253,28 @@ body{
 }
 
 .shop-items {
-  margin-top: 32px;
+  margin-top: 32px auto;
+  font-family: var(--header_font);
+
 }
 
 .shop-items h2 {
   margin-bottom: 24px;
   display: flex;
   align-items: center;
+  justify-content: center; /* center the title itself */
   gap: 12px;
+  text-align: center;
 }
 
-/* Draw a soft divider line that fills the remaining space to the right of the title */
+/* Decorative lines on both sides of the centered title */
+.shop-items h2::before,
 .shop-items h2::after {
   content: "";
   flex: 1;
-  height: 2px; /* slightly thicker for visibility */
-  background: var(--accent); /* use theme accent color */
-  opacity: 0.35; /* keep it subtle but noticeable */
+  height: 2px;
+  background: var(--accent);
+  opacity: 0.35;
 }
 
 .shop-header {
@@ -278,6 +282,7 @@ body{
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  font-family: var(--header_font);
 }
 
 
@@ -420,7 +425,7 @@ body{
 
 .product-actions{
   margin-top: auto;
-  padding-top: 12px;
+  padding-top: 6px;
   display:flex;
   gap:8px;
   flex-wrap:wrap;
@@ -438,11 +443,13 @@ body{
 .btn-purchase{
   background: #16a34a;
   color: #fff;
+  text-transform: uppercase;
 }
 
 .btn-delete{
   background: #ef4444;
   color: #fff;
+  text-transform: uppercase;
 }
 
 /* Center the delete button on chore cards in the unassigned (middle) column */
@@ -520,8 +527,13 @@ body{
 .tcg-modal p{ margin: 0 0 12px 0; }
 .tcg-modal-actions{ display:flex; gap:10px; justify-content:center; }
 .tcg-modal-actions button{ padding:8px 12px; border-radius:6px; border:none; cursor:pointer; font:inherit; }
-.tcg-modal-actions .left{ background:#2b6cb0; color:#fff; }
-.tcg-modal-actions .right{ background:#16a34a; color:#fff; }
+.tcg-modal-actions .left{ background: var(--left_opponent); color:#000000; text-transform: uppercase; font-family: var(--names_font);}
+.tcg-modal-actions .right{ background:var(--right_opponent); color:#000000; text-transform: uppercase; font-family: var(--names_font);}
+/* new explicit classes for confirm/cancel */
+.tcg-modal-actions .btn-cancel{ background:#2b6cb0; color:#fff; }
+.tcg-modal-actions .btn-confirm{ background:#16a34a; color:#fff; }
+/* dedicated OK button for info modals */
+.tcg-modal-actions .btn-ok{ background:#16a34a; color:#fff; }
 
 #auction-btn {
     border: none;
@@ -537,3 +549,7 @@ body{
     margin: 1rem 0;
 }
 
+@media (max-with:100px) {
+ 
+  
+}

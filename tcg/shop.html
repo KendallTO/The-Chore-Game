@@ -11,7 +11,7 @@
   
     <div class="container">
         <a href="index.html">
-          <img class="logo" src="images/logo_chore_2.png" alt="Logo">
+          <img class="logo" src="images/Logo_THE_GREAT_CHORE_OFF_Icon.png" alt="Logo">
         </a>
         <div class="container-logo">
           <a href="index.html">
@@ -19,7 +19,7 @@
           </a>
         </div>
           <nav class="main-nav">
-              <a class="header-btn" href="index.html">House</a>
+              <a class="header-btn" href="index.html">Home</a>
               <a class ="header-btn" href="shop.html">Shop</a>
           </nav>
       </div>
@@ -29,7 +29,7 @@
         <!-- points display with shop management in center -->
         <div class="points-display grid-3">
             <div class="points-box" id="left-points-box">
-                <h3 id="left-header">Left Column</h3>
+                <h3 id="left-header" style="text-transform: uppercase;">Left Column</h3>
                 <div class="points-value"><strong id="shop-left-points">0</strong> pts</div>
             </div>
             
@@ -55,7 +55,7 @@
                     </div>
 
                     <div class="form-row">
-                        <input id="item-price" name="price" type="number" min="0" step="5" required aria-required="true" aria-label="Price (points)" placeholder="Price (points)*" />
+                        <input id="item-price" name="price" type="text" inputmode="numeric" pattern="[0-9,]*" required aria-required="true" aria-label="Price (points)" placeholder="Price (points)*" />
                     </div>
 
                     <div class="form-row">
@@ -71,7 +71,7 @@
             </section>
             
             <div class="points-box" id="right-points-box">
-                <h3 id="right-header">Right Column</h3>
+                <h3 id="right-header" style="text-transform: uppercase;">Right Column</h3>
                 <div class="points-value"><strong id="shop-right-points">0</strong> pts</div>
             </div>
         </div>
@@ -87,8 +87,7 @@
 
     <footer class="site-footer">
         <div class="container">
-            <p>© <span id="year2"></span> The Great Chore-Off</p>
-            <p> <span id = "year"></span> Made By: Sean Heiner, Spiter-Man, & Kendall Olson!
+            <p>© <span id="year2"></span> The Great Chore-Off: Made By: Sean Heiner, Spiter-Man, & Kendall Olson!</p>
             </p>
         </div>
     </footer>
@@ -98,7 +97,7 @@
         (function(){
             const STORAGE_KEY = 'tcg_shop_items_v1';
             const defaultItems = [
-                { id: Date.now()+1, name: 'Product 1', description: 'Sample item', price: 50, oneTime: false },
+                { id: Date.now()+1, name: 'Example', description: 'Example item', price: 50, oneTime: false },
                 { id: Date.now()+2, name: 'Product 2', description: '', price: 30, oneTime: true },
                 { id: Date.now()+3, name: 'Product 3', description: '', price: 20, oneTime: false }
             ];
@@ -118,12 +117,14 @@
                 return Math.max(0, r);
             }
 
-            // when user finishes editing price, snap to nearest 5
+            // Price field behavior: allow typing commas/letters, but sanitize on Enter or submit
             if(priceInput){
-                priceInput.addEventListener('blur', () => {
-                    const val = Number(priceInput.value);
-                    if(Number.isNaN(val)) return;
-                    priceInput.value = String(roundToNearest5(val));
+                // On Enter key, strip all non-digits (keep integers only)
+                priceInput.addEventListener('keydown', (e) => {
+                    if(e.key === 'Enter'){
+                        const cleaned = (priceInput.value || '').replace(/[^0-9]/g, '');
+                        priceInput.value = cleaned;
+                    }
                 });
             }
 
@@ -209,7 +210,10 @@
 
                 const name = nameInput.value.trim();
                 const desc = descInput.value.trim();
-                const price = Number(priceInput.value);
+                // Strip commas and any letters; keep only digits before parsing
+                const cleanedPrice = (priceInput.value || '').replace(/[^0-9]/g, '');
+                priceInput.value = cleanedPrice; // reflect sanitized value in the UI
+                const price = Number(cleanedPrice);
                 const oneTime = !!oneTimeInput.checked;
 
                 if(!name){
@@ -217,7 +221,8 @@
                     nameInput.focus();
                     return;
                 }
-                if(Number.isNaN(price) || price < 0){
+                // Require at least one digit; treat empty/invalid as error
+                if(cleanedPrice === '' || Number.isNaN(price) || price < 0){
                     msgEl.textContent = 'Enter a valid price (0 or more).';
                     priceInput.focus();
                     return;
@@ -280,6 +285,30 @@
                 });
             }
 
+                        // info helper: single-OK modal matching shop style
+                                    function showInfo(message, okLabel = 'OK'){
+                                return new Promise((resolve)=>{
+                                        const overlay = document.createElement('div');
+                                        overlay.className = 'tcg-modal-overlay';
+                                        overlay.innerHTML = `
+                                            <div class="tcg-modal">
+                                                <p>${message}</p>
+                                                <div class="tcg-modal-actions">
+                                                                <button class="btn-ok">${okLabel}</button>
+                                                </div>
+                                            </div>`;
+                                        document.body.appendChild(overlay);
+                                                    const okBtn = overlay.querySelector('button.btn-ok');
+                                        function cleanup(){
+                                                okBtn.removeEventListener('click', onOk);
+                                                try{ document.body.removeChild(overlay); }catch(e){}
+                                                resolve(true);
+                                        }
+                                        function onOk(){ cleanup(); }
+                                        okBtn.addEventListener('click', onOk);
+                                });
+                        }
+
                         // confirm helper: show a purchase confirmation modal (Confirm / Cancel)
                         function askConfirmPurchase(itemName, price){
                                 return new Promise((resolve)=>{
@@ -289,13 +318,13 @@
                                             <div class="tcg-modal">
                                                 <p>Confirm purchase of "${itemName}" for ${price} pts?</p>
                                                 <div class="tcg-modal-actions">
-                                                    <button class="left">Cancel</button>
-                                                    <button class="right">Confirm</button>
+                                                    <button class="btn-cancel">Cancel</button>
+                                                    <button class="btn-confirm">Confirm</button>
                                                 </div>
                                             </div>`;
                                         document.body.appendChild(overlay);
-                                        const cancelBtn = overlay.querySelector('button.left');
-                                        const confirmBtn = overlay.querySelector('button.right');
+                                        const cancelBtn = overlay.querySelector('button.btn-cancel');
+                                        const confirmBtn = overlay.querySelector('button.btn-confirm');
                                         function cleanup(choice){
                                                 cancelBtn.removeEventListener('click', onCancel);
                                                 confirmBtn.removeEventListener('click', onConfirm);
@@ -350,7 +379,7 @@
 
                 const current = Number(points[payer] || 0);
                 if(current < item.price){
-                    alert(`${payerName} does not have enough points (${current} pts) to purchase this item (${item.price} pts).`);
+                    await showInfo(`${payerName.toUpperCase()} does not have enough points (${current} pts) <br> ${payerName.toUpperCase()} needs (${item.price} pts) to purchase this item.`, 'OK');
                     return;
                 }
 

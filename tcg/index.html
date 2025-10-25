@@ -10,7 +10,7 @@
   
     <div class="container">
         <a href="index.html">
-          <img class="logo" src="images/logo_chore_2.png" alt="Logo">
+          <img class="logo" src="images/Logo_THE_GREAT_CHORE_OFF_Icon.png" alt="Logo">
         </a>
         <div class="container-logo">
           <a href="index.html">
@@ -43,7 +43,7 @@
              </div>
 
             <div class="column" id="chores-column">
-                <h3 class="column-header" aria-label="Unchoosen Chores">Unchosen Chores</h3>
+                <h3 class="column-header" aria-label="Unchoosen Chores">Unassigned Chores</h3>
 
                 <!-- random assign button -->
                 <div class="button-container">
@@ -85,8 +85,7 @@
 
     <footer class="site-footer">
         <div class="container">
-            <p>© <span id="year"></span> The Great Chore-Off</p>
-            <p> <span id = "year"></span> Made By: Sean Heiner, Spiter-Man, & Kendall Olson!
+            <p>© <span id="year"></span> The Great Chore-Off: Made By: Sean Heiner, Spiter-Man, & Kendall Olson!</p>
             </p>
         </div>
     </footer>
@@ -179,8 +178,8 @@
 
       function saveHeaders(){
         if(!leftHeaderEl || !rightHeaderEl) return;
-        const leftText = (leftHeaderEl.textContent || '').trim().slice(0, HEADER_MAX);
-        const rightText = (rightHeaderEl.textContent || '').trim().slice(0, HEADER_MAX);
+        const leftText = (leftHeaderEl.textContent || '').replace(/[\r\n]+/g, '').trim().slice(0, HEADER_MAX);
+        const rightText = (rightHeaderEl.textContent || '').replace(/[\r\n]+/g, '').trim().slice(0, HEADER_MAX);
         const payload = { left: leftText, right: rightText };
         localStorage.setItem(HEADERS_KEY, JSON.stringify(payload));
       }
@@ -436,6 +435,8 @@
         }
         if(action === 'unassign'){
           chores[idx].loc = 'unchosen';
+          // After unassigning, enable draft mode so manual assign buttons appear in the unassigned list
+          draftMode = true;
           saveChores(chores);
           render();
           return;
@@ -707,20 +708,32 @@
       [leftHeaderEl, rightHeaderEl].forEach(h => {
         if(!h) return;
         // save header text and re-render as the user types / on blur
+        h.addEventListener('keydown', (e) => {
+          // Block Enter/new line in contenteditable
+          if(e.key === 'Enter'){
+            e.preventDefault();
+          }
+        });
         h.addEventListener('input', () => {
-          // Enforce 8-char limit live while typing/pasting
-          const txt = (h.textContent || '').trim();
-          if(txt.length > HEADER_MAX){
-            h.textContent = txt.slice(0, HEADER_MAX);
+          // Remove any newlines and enforce 8-char limit live while typing/pasting
+          const raw = (h.textContent || '');
+          const noNewlines = raw.replace(/[\r\n]+/g, '');
+          const trimmed = noNewlines.trim();
+          const limited = trimmed.length > HEADER_MAX ? trimmed.slice(0, HEADER_MAX) : trimmed;
+          if(limited !== raw){
+            h.textContent = limited;
           }
           saveHeaders();
           render();
         });
         h.addEventListener('blur', () => {
-          // Ensure limit also on blur
-          const txt = (h.textContent || '').trim();
-          if(txt.length > HEADER_MAX){
-            h.textContent = txt.slice(0, HEADER_MAX);
+          // Ensure no newlines and limit also on blur
+          const raw = (h.textContent || '');
+          const noNewlines = raw.replace(/[\r\n]+/g, '');
+          const trimmed = noNewlines.trim();
+          const limited = trimmed.length > HEADER_MAX ? trimmed.slice(0, HEADER_MAX) : trimmed;
+          if(limited !== raw){
+            h.textContent = limited;
           }
           saveHeaders();
           render();
