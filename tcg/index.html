@@ -21,16 +21,18 @@
         <section class="grid-3">
             <div class="column">
                 <h3 class="column-header" contenteditable="true" aria-label="Column 1 header">Column 1</h3>
-                <article class="card">Item 1</article>
-                <article class="card">Item 2</article>
+
+                <!-- left column chores -->
+                <div id="left-list">
+                    <article class="card chore-placeholder">No chores assigned.</article>
+                </div>
             </div>
 
             <div class="column" id="chores-column">
                 <h3 class="column-header" aria-label="Unchoosen Chores">Unchoosen Chores</h3>
 
-                <!-- chores list (rendered by JS) -->
+                <!-- unchosen chores list (rendered by JS) -->
                 <div id="chores-list">
-                    <!-- placeholder shown when empty -->
                     <article class="card chore-placeholder">No chores yet — add one below.</article>
                 </div>
 
@@ -55,8 +57,11 @@
 
             <div class="column">
                 <h3 class="column-header" contenteditable="true" aria-label="Column 3 header">Column 3</h3>
-                <article class="card">Item 5</article>
-                <article class="card">Item 6</article>
+
+                <!-- right column chores -->
+                <div id="right-list">
+                    <article class="card chore-placeholder">No chores assigned.</article>
+                </div>
             </div>
         </section>
     </main>
@@ -76,12 +81,17 @@
     // chores: add, render, persist (localStorage)
     (function(){
       const STORAGE_KEY = 'tcg_chores_v1';
-      const listEl = document.getElementById('chores-list');
+
+      const leftListEl = document.getElementById('left-list');
+      const unchosenListEl = document.getElementById('chores-list');
+      const rightListEl = document.getElementById('right-list');
+
       const form = document.getElementById('add-chore-form');
       const nameInput = document.getElementById('chore-name');
       const pointsInput = document.getElementById('chore-points');
       const msgEl = document.getElementById('chore-msg');
 
+      // chores have shape: { id, name, points, loc } where loc is 'unchosen'|'left'|'right'
       function loadChores(){
         try{
           const raw = localStorage.getItem(STORAGE_KEY);
@@ -99,6 +109,7 @@
         const art = document.createElement('article');
         art.className = 'card chore';
         art.dataset.id = String(chore.id);
+        art.dataset.loc = chore.loc || 'unchosen';
 
         const wrap = document.createElement('div');
         wrap.style.width = '100%';
@@ -114,32 +125,85 @@
         pts.style.fontWeight = '600';
         wrap.appendChild(pts);
 
-        // delete button
         const actions = document.createElement('div');
         actions.style.marginTop = '8px';
+        actions.style.display = 'flex';
+        actions.style.gap = '8px';
+        actions.style.flexWrap = 'wrap';
+
+        // action buttons depend on location
+        if(!chore.loc || chore.loc === 'unchosen'){
+          const assignLeft = document.createElement('button');
+          assignLeft.type = 'button';
+          assignLeft.className = 'btn';
+          assignLeft.textContent = 'Assign → Left';
+          assignLeft.dataset.action = 'assign-left';
+          actions.appendChild(assignLeft);
+
+          const assignRight = document.createElement('button');
+          assignRight.type = 'button';
+          assignRight.className = 'btn';
+          assignRight.textContent = 'Assign → Right';
+          assignRight.dataset.action = 'assign-right';
+          actions.appendChild(assignRight);
+        } else {
+          const unassign = document.createElement('button');
+          unassign.type = 'button';
+          unassign.className = 'btn';
+          unassign.textContent = 'Unassign';
+          unassign.dataset.action = 'unassign';
+          actions.appendChild(unassign);
+        }
+
         const del = document.createElement('button');
         del.type = 'button';
         del.className = 'btn btn-delete';
         del.textContent = 'Delete';
         del.dataset.action = 'delete';
         actions.appendChild(del);
-        wrap.appendChild(actions);
 
+        wrap.appendChild(actions);
         art.appendChild(wrap);
         return art;
       }
 
       function render(){
         const chores = loadChores();
-        listEl.innerHTML = '';
-        if(!chores.length){
+
+        leftListEl.innerHTML = '';
+        unchosenListEl.innerHTML = '';
+        rightListEl.innerHTML = '';
+
+        const left = chores.filter(c => c.loc === 'left');
+        const right = chores.filter(c => c.loc === 'right');
+        const unchosen = chores.filter(c => !c.loc || c.loc === 'unchosen');
+
+        if(!left.length){
+          const ph = document.createElement('article');
+          ph.className = 'card chore-placeholder';
+          ph.textContent = 'No chores assigned.';
+          leftListEl.appendChild(ph);
+        } else {
+          left.forEach(c => leftListEl.appendChild(makeChoreCard(c)));
+        }
+
+        if(!unchosen.length){
           const ph = document.createElement('article');
           ph.className = 'card chore-placeholder';
           ph.textContent = 'No chores yet — add one below.';
-          listEl.appendChild(ph);
-          return;
+          unchosenListEl.appendChild(ph);
+        } else {
+          unchosen.forEach(c => unchosenListEl.appendChild(makeChoreCard(c)));
         }
-        chores.forEach(c => listEl.appendChild(makeChoreCard(c)));
+
+        if(!right.length){
+          const ph = document.createElement('article');
+          ph.className = 'card chore-placeholder';
+          ph.textContent = 'No chores assigned.';
+          rightListEl.appendChild(ph);
+        } else {
+          right.forEach(c => rightListEl.appendChild(makeChoreCard(c)));
+        }
       }
 
       form.addEventListener('submit', function(e){
@@ -161,7 +225,7 @@
         }
 
         const chores = loadChores();
-        const newChore = { id: Date.now(), name, points: Math.floor(points) };
+        const newChore = { id: Date.now(), name, points: Math.floor(points), loc: 'unchosen' };
         chores.push(newChore);
         saveChores(chores);
         render();
@@ -170,17 +234,43 @@
         setTimeout(()=> msgEl.textContent = '', 1800);
       });
 
-      // delegated delete handler
-      listEl.addEventListener('click', function(e){
-        const btn = e.target.closest('button[data-action="delete"]');
+      // delegated action handler for all three lists
+      document.querySelector('.grid-3').addEventListener('click', function(e){
+        const btn = e.target.closest('button[data-action]');
         if(!btn) return;
+        const action = btn.dataset.action;
         const card = btn.closest('.chore');
         if(!card) return;
         const id = Number(card.dataset.id);
-        if(!confirm('Delete this chore?')) return;
-        const chores = loadChores().filter(c => c.id !== id);
-        saveChores(chores);
-        render();
+        let chores = loadChores();
+        const idx = chores.findIndex(c => c.id === id);
+        if(idx === -1) return;
+
+        if(action === 'assign-left'){
+          chores[idx].loc = 'left';
+          saveChores(chores);
+          render();
+          return;
+        }
+        if(action === 'assign-right'){
+          chores[idx].loc = 'right';
+          saveChores(chores);
+          render();
+          return;
+        }
+        if(action === 'unassign'){
+          chores[idx].loc = 'unchosen';
+          saveChores(chores);
+          render();
+          return;
+        }
+        if(action === 'delete'){
+          if(!confirm('Delete this chore?')) return;
+          chores.splice(idx, 1);
+          saveChores(chores);
+          render();
+          return;
+        }
       });
 
       // initial render
