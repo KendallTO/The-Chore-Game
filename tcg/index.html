@@ -70,7 +70,7 @@
                  <h3 class="column-header" contenteditable="true" style="text-transform: uppercase;" aria-label="Column 3 header">Enter Name Here</h3>
  
                 <!-- right points bank (display only) -->
-                <div class="points-bank" style="align-self:flex-end;">
+                <div class="points-bank" id="right-points-bank" style="text-align: right;">
                   <div>Points: <strong id="right-points">0</strong></div>
                 </div>
 
@@ -383,6 +383,7 @@
         const newChore = { id: Date.now(), name, points: Math.floor(points), loc: 'unchosen' };
         chores.push(newChore);
         saveChores(chores);
+        draftMode = false; // Disable manual assign buttons when adding new chore
         render();
         form.reset();
       });

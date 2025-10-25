@@ -24,7 +24,8 @@
 /* Simple wireframe styles */
 :root{
   --gap: 16px;
-  --max-width: 1100px;
+  /* Let container width grow with viewport but cap for readability */
+  --max-width: clamp(960px, 96vw, 1400px);
   --accent: #2b6cb0;
   --muted: #f3f4f6;
   --text: #111827;
@@ -43,7 +44,7 @@ body{
 }
 
 .container{
-  max-width: var(--max-width);
+  max-width: 100%;
   margin: 0 auto;
   padding: 16px;
 }
@@ -117,9 +118,103 @@ body{
 
 .grid-3{
   display:grid;
-  gap: var(--gap);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Scale the gap with viewport width within sensible bounds */
+  gap: clamp(12px, 4vw, 48px);
+  /* Flexible sides with a clamped center column for consistent proportions */
+  grid-template-columns: minmax(220px, 1fr) clamp(260px, 30vw, 560px) minmax(220px, 1fr);
   margin: 0 auto;
+}
+
+/* Wider columns specifically for index.html main chore grid */
+body:has(.site-main .grid-3 #chores-column) .site-main .grid-3{
+  /* Match shop top three columns sizing */
+  grid-template-columns: minmax(220px, 1fr) clamp(260px, 30vw, 560px) minmax(220px, 1fr);
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+}
+
+body:has(.site-main .grid-3 #chores-column) #left-list{
+  width: 100%;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+body:has(.site-main .grid-3 #chores-column) #right-list{
+  width: 100%;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+body:has(.site-main .grid-3 #chores-column) #chores-list{
+  width: 100%;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Remove padding from columns on index.html */
+body:has(.site-main .grid-3 #chores-column) .site-main .grid-3 .column{
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 25vw;
+}
+
+/* Increase width of cards and elements within columns by 50% on index.html */
+body:has(.site-main .grid-3 #chores-column) .site-main .grid-3 .column .card{
+  width: 100%;
+  align-self: center;
+  text-align: center;
+}
+
+body:has(.site-main .grid-3 #chores-column) .site-main .grid-3 .column .column-header{
+  width: 100%;
+}
+
+/* Increase minimum width of headers and articles on index by 20% */
+body:has(.site-main .grid-3 #chores-column) .site-main .grid-3 .column .column-header,
+body:has(.site-main .grid-3 #chores-column) .site-main .grid-3 .column article.card{
+  max-width: 100%;
+}
+
+/* Set left and right padding to 5px for articles on index.html */
+body:has(.site-main .grid-3 #chores-column) .site-main .grid-3 .column article.card{
+  padding-left: 5px;
+  padding-right: 5px;
+  min-width: 0; /* Allow cards to shrink below default minimum */
+  overflow: hidden; /* Prevent horizontal overflow */
+}
+
+/* Make manual assign buttons responsive within chore cards */
+body:has(.site-main .grid-3 #chores-column) .card .btn{
+  font-size: clamp(0.65rem, 1.2vw, 0.9rem);
+  padding: clamp(3px, 0.8vw, 8px) clamp(4px, 1vw, 10px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+body:has(.site-main .grid-3 #chores-column) .site-main .grid-3 .column .points-bank{
+  display: block;
+  align-self: center;
+  text-align: left;
+  width: 100%;
+}
+
+/* Force right points bank to align with column 3 header */
+body:has(.site-main .grid-3 #chores-column) #right-points-bank{
+  display: block;
+  text-align: right;
+  align-self: center;
 }
 
 .card{
@@ -133,8 +228,10 @@ body{
   border-radius:8px;
   color:#374151;
   width: 100%;
+    max-width: 100%;
   word-break: break-word;
   overflow-wrap: break-word;
+    box-sizing: border-box;
 }
 
 /* Responsive */
@@ -162,11 +259,9 @@ body{
   display:flex;
   flex-direction: column;
   gap:12px;
-}s
-
-.grid-3 {
-  gap: 4vw;
 }
+
+/* (merged into the primary .grid-3 block above) */
 
 .column-header{
   margin:0;
@@ -182,11 +277,7 @@ body{
   justify-self: center;
 }
 
-#chores-column .card {
-  width: 100%;
-  box-sizing: border-box;
-  word-break: break-word;
-}
+/* Removed redundant #chores-column .card rule; covered by global .card styles */
 
 #column-left h3, #left-header, #left-points-box{
   text-align: center;
@@ -256,6 +347,14 @@ body{
   margin-top: 32px auto;
   font-family: var(--header_font);
 
+}
+
+/* Dedicated grid for Available Items products */
+.products-grid{
+  display: grid;
+  gap: clamp(12px, 2.5vw, 24px);
+  /* Equal-width columns that fill the row and respond to viewport */
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
 .shop-items h2 {
@@ -358,7 +457,7 @@ body{
 
 .product-title{ 
   margin:0 0 6px 0; 
-  font-size:1rem; 
+  font-size:3rem; 
   color:#111827;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -381,14 +480,15 @@ body{
 }
 
 .product-price{ 
-  margin: 8px 0 0 0; 
+  margin: 8px 0 0 0;
+  font-size: 1.5rem;
   font-weight:600; 
   color:var(--accent);
   white-space: nowrap;
 }
 
-/* when grid has product cards, ensure card layout */
-.grid-3 .product{ 
+/* when products are in the products-grid, ensure card layout */
+.products-grid .product{ 
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
@@ -424,7 +524,7 @@ body{
 }
 
 .product-actions{
-  margin-top: auto;
+  margin-top: 15px;
   padding-top: 6px;
   display:flex;
   gap:8px;
@@ -433,11 +533,12 @@ body{
 }
 
 .btn{
-  padding:6px 10px;
-  border-radius:6px;
+  padding: clamp(4px, 1vw, 10px) clamp(6px, 1.5vw, 14px);
+  border-radius: 6px;
   border: none;
   cursor: pointer;
   font: inherit;
+  font-size: clamp(0.75rem, 1.5vw, 1rem);
 }
 
 .btn-purchase{
