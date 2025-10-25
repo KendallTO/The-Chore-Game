@@ -31,6 +31,11 @@
             <div class="column" id="chores-column">
                 <h3 class="column-header" aria-label="Unchoosen Chores">Unchoosen Chores</h3>
 
+                <!-- random assign button -->
+                <div>
+                  <button id="random-assign-btn" type="button" class="btn">Randomly Assign Chores</button>
+                </div>
+
                 <!-- unchosen chores list (rendered by JS) -->
                 <div id="chores-list">
                     <article class="card chore-placeholder">No chores yet — add one below.</article>
@@ -44,8 +49,8 @@
                     </div>
 
                     <div class="form-row">
-                        <label for="chore-points">Points<span class="req">*</span></label>
-                        <input id="chore-points" name="points" type="number" min="0" step="1" required aria-required="true" />
+                        <label>Points</label>
+                        <div style="padding:8px; color:#374151;">10 pts (fixed)</div>
                     </div>
 
                     <div class="form-row">
@@ -89,7 +94,6 @@
 
       const form = document.getElementById('add-chore-form');
       const nameInput = document.getElementById('chore-name');
-      const pointsInput = document.getElementById('chore-points');
       const msgEl = document.getElementById('chore-msg');
 
       // header elements (editable)
@@ -252,16 +256,11 @@
         msgEl.textContent = '';
 
         const name = nameInput.value.trim();
-        const points = Number(pointsInput.value);
+        const points = 10; // fixed starting value
 
         if(!name){
           msgEl.textContent = 'Name required.';
           nameInput.focus();
-          return;
-        }
-        if(Number.isNaN(points) || points < 0){
-          msgEl.textContent = 'Enter valid points (0 or more).';
-          pointsInput.focus();
           return;
         }
 
@@ -313,6 +312,54 @@
           return;
         }
       });
+
+      // random assign button: distribute unchosen chores randomly to left or right
+      const randomAssignBtn = document.getElementById('random-assign-btn');
+      if(randomAssignBtn){
+        // balanced assignment: aim for equal counts (difference at most 1)
+        randomAssignBtn.addEventListener('click', function(){
+          const chores = loadChores();
+          const unchosen = chores.filter(c => !c.loc || c.loc === 'unchosen');
+          if(!unchosen.length){
+            msgEl.textContent = 'No unassigned chores to assign.';
+            setTimeout(()=> msgEl.textContent = '', 1800);
+            return;
+          }
+
+          // count current items
+          let leftCount = chores.filter(c => c.loc === 'left').length;
+          let rightCount = chores.filter(c => c.loc === 'right').length;
+
+          // shuffle unchosen so distribution is not deterministic
+          for(let i = unchosen.length - 1; i > 0; i--){
+            const j = Math.floor(Math.random() * (i + 1));
+            [unchosen[i], unchosen[j]] = [unchosen[j], unchosen[i]];
+          }
+
+          // assign each unchosen chore to the column with fewer chores,
+          // if equal pick randomly — this ensures near-equal distribution
+          const idsToAssign = new Set(unchosen.map(c => c.id));
+          chores.forEach(c => {
+            if(!idsToAssign.has(c.id)) return;
+            if(leftCount < rightCount){
+              c.loc = 'left';
+              leftCount++;
+            } else if(rightCount < leftCount){
+              c.loc = 'right';
+              rightCount++;
+            } else {
+              // counts equal — pick randomly
+              if(Math.random() < 0.5){ c.loc = 'left'; leftCount++; }
+              else { c.loc = 'right'; rightCount++; }
+            }
+          });
+
+          saveChores(chores);
+          render();
+          msgEl.textContent = `Assigned ${unchosen.length} chore(s) (balanced).`;
+          setTimeout(()=> msgEl.textContent = '', 1800);
+        });
+      }
 
       // re-render when either column header text changes so button labels stay in sync
       [leftHeaderEl, rightHeaderEl].forEach(h => {
