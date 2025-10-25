@@ -107,6 +107,19 @@ body{
   border: 1px dashed transparent;
 }
 
+#left-list h3 {
+  text-align: left;
+}
+
+#chores-column h3 {
+  text-align: center;
+}
+
+#right-list h3 {
+  text-align: right;
+}
+
+
 /* make editable header visually clear when focused */
 .column-header[contenteditable="true"]:focus{
   outline: none;
