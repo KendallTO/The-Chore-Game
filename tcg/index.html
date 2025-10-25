@@ -3,9 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>The Chore Game - Home</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <p>Hello Mr. Anderson</p> 
+    <header class="site-header">
+        <div class="container">
+            <h1 class="logo">The Chore Game</h1>
+            <nav class="main-nav">
+                <a href="tindex.html">Home</a>
+                <a href="shop.html">Shop</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="site-main container">
+        <section class="grid-3">
+            <article class="card">Item 1</article>
+            <article class="card">Item 2</article>
+            <article class="card">Item 3</article>
+            <article class="card">Item 4</article>
+            <article class="card">Item 5</article>
+            <article class="card">Item 6</article>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>© <span id="year"></span> The Chore Game</p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
 </body>
 </html>

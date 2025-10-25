@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>The Chore Game - Shop</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <h1 class="logo">Shop</h1>
+            <nav class="main-nav">
+                <a href="index.html">Home</a>
+                <a href="shop.html">Shop</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="site-main container">
+        <h2>Shop (wireframe)</h2>
+        <section class="grid-3">
+            <article class="card">Product 1</article>
+            <article class="card">Product 2</article>
+            <article class="card">Product 3</article>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>© <span id="year2"></span> The Chore Game</p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('year2').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>
