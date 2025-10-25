@@ -447,7 +447,7 @@ body:has(.site-main .grid-3 #chores-column) #right-points-bank{
 
 .product-title{ 
   margin:0 0 6px 0; 
-  font-size:3rem; 
+  font-size:2vw; 
   color:#111827;
   overflow: hidden;
   text-overflow: ellipsis;
