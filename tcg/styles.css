@@ -107,7 +107,7 @@ body{
   border: 1px dashed transparent;
 }
 
-#left-list h3 {
+#column-left h3 {
   text-align: left;
 }
 
@@ -115,7 +115,7 @@ body{
   text-align: center;
 }
 
-#right-list h3 {
+#column-right h3 {
   text-align: right;
 }
 
